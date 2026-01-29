@@ -1,0 +1,25 @@
+
+# backend server
+cd backend
+python -m venv .venv
+
+.\.venv\Scripts\activate
+
+pip install fastapi uvicorn
+
+
+#reloard backend
+uvicorn app.main:app --reload
+
+#open to lan backend server 
+ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+
+#front end server
+cd ..\frontend
+npm create vite@latest . -- --template react
+npm install
+npm run dev
+
+
+npm run dev -- --host
