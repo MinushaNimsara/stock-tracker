@@ -2,18 +2,17 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Get DATABASE_URL from environment variable (for production)
-# Falls back to SQLite for local development
+# Get DATABASE_URL from environment variable
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "sqlite:///./stock_tracker.db"
 )
 
-# Fix for Render.com PostgreSQL URL format
+# Fix for Neon PostgreSQL URL format
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
 
-# Create engine (no connect_args for PostgreSQL)
+# Create engine
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
         DATABASE_URL,
