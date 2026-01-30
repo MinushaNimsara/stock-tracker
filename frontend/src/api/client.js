@@ -8,7 +8,9 @@ import axios from 'axios';
 // const API_BASE_URL = 'http://127.0.0.1:8000';
 
 // For NETWORK ACCESS (Other PCs):
-const API_BASE_URL = 'http://192.168.1.124:8000';  // ✅ Replace with YOUR server IP
+const API_BASE_URL = 'http://192.168.1.126:8000';
+
+export default API_BASE_URL;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
