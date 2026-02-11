@@ -1,19 +1,13 @@
 import axios from 'axios';
 
-// ✅ CHANGE THIS to your server PC's IP address
-// Find your server IP: Open CMD and type "ipconfig"
-// Look for "IPv4 Address" under your WiFi/Ethernet adapter
-
-// For DEVELOPMENT on same PC:
-// const API_BASE_URL = 'http://127.0.0.1:8000';
-
-// For NETWORK ACCESS (Other PCs):
-const API_BASE_URL = 'http://192.168.1.126:8000';
-
-export default API_BASE_URL;
+// VITE_API_URL: use for Railway backend (Option B) or local dev override
+// If unset in production: use same-origin /api (Vercel serverless - Option A)
+const baseURL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? '/api' : 'http://127.0.0.1:8000');
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },

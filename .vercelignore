@@ -1,0 +1,10 @@
+# Don't upload venv and heavy deps; Vercel installs from api/requirements.txt
+backend/.venv
+backend/node_modules
+backend/__pycache__
+backend/**/__pycache__
+backend/*.db
+backend/StockTracker_Portable*
+node_modules
+frontend/node_modules
+*.rar
