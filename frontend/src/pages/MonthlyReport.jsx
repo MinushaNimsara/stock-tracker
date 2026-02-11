@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api/client';
+import { api, baseURL } from '../api/client';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import logo from '../assets/logo.png';
@@ -42,7 +42,11 @@ export default function MonthlyReport() {
       setFilteredData(response.data.data);
     } catch (err) {
       console.error('Error loading report:', err);
-      setError(`Error: ${err.response?.data?.detail || err.message}`);
+      const msg = err.response?.data?.detail || err.message;
+      const isNetwork = !err.response && (msg === 'Network Error' || err.code === 'ERR_NETWORK');
+      setError(isNetwork
+        ? 'Cannot reach backend server. Deploy the API (Vercel or Railway) and set DATABASE_URL. See DEPLOY.md.'
+        : `Error: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -445,6 +449,15 @@ export default function MonthlyReport() {
       {error && (
         <div style={styles.errorContainer}>
           <p>{error}</p>
+          <p style={{ marginTop: 12, fontSize: 13, opacity: 0.9 }}>
+            API base: <code style={{ background: 'rgba(0,0,0,0.1)', padding: '2px 6px' }}>{baseURL || '(same origin)'}</code>
+          </p>
+          <p style={{ marginTop: 8, fontSize: 13 }}>
+            <a href="/api/" target="_blank" rel="noopener noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>
+              Open /api/ in new tab
+            </a>
+            {' '}— if you see 404, set Vercel Root Directory to empty (see VERCEL_CHECKLIST.md).
+          </p>
         </div>
       )}
 

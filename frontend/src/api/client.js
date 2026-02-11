@@ -14,6 +14,7 @@ const apiClient = axios.create({
 });
 
 export default apiClient;
+export { baseURL };
 
 // API methods
 export const api = {

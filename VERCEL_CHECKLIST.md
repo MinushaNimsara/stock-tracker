@@ -1,0 +1,72 @@
+# Vercel checklist – fix "Network Error"
+
+I can’t log into your Vercel account. Do these checks yourself; they fix most "Network Error" cases.
+
+---
+
+## 1. Root Directory (most common cause)
+
+If this is wrong, the API is never deployed and `/api` returns 404 → "Network Error".
+
+1. Go to [vercel.com](https://vercel.com) → your **stock-tracker** project.
+2. **Settings** → **General**.
+3. Find **Root Directory**.
+4. It must be **empty** (or `.`).  
+   If it is **`frontend`**, clear it and leave it empty.
+5. Save.
+
+Then go to **Deployments** → **Redeploy** the latest deployment.
+
+---
+
+## 2. Test the API directly
+
+After redeploying, open this URL in your browser:
+
+**https://stock-tracker-ten-eosin.vercel.app/api/**
+
+- You see **`{"message":"API is running"}`** (or similar JSON) → API works. If the app still shows Network Error, hard refresh the app (Ctrl+F5) or try another page.
+- You see **404** → API is not deployed. Fix **Root Directory** (step 1) and redeploy.
+- You see **500 / "Function crashed"** → API runs but fails. Check **step 3** and **4**.
+
+---
+
+## 3. Environment variable DATABASE_URL
+
+1. In the same project: **Settings** → **Environment Variables**.
+2. There must be a variable **`DATABASE_URL`** with your Neon (or Supabase) connection string.
+3. It must be set for **Production** (and Preview if you use it).
+4. If you changed it, **Redeploy** again (env vars apply on next deploy).
+
+---
+
+## 4. Check function logs (if API returns 500)
+
+1. **Deployments** → open the latest deployment.
+2. Go to **Functions** (or **Logs**).
+3. Find the `/api` (or `api/index`) function and open its logs.
+4. Look for a Python traceback or error message (e.g. missing module, database connection error). That tells you what to fix.
+
+---
+
+## 5. Repo content
+
+Your GitHub repo should have this shape (so Vercel can build frontend and API):
+
+- **Root:** `vercel.json`, `api/`, `frontend/`, `backend/`
+- **Not** only `frontend/` at root.
+
+If you connected Vercel to a repo that only has the frontend folder, connect it instead to the repo that has **api**, **backend**, **frontend**, and **vercel.json** at the root, and set Root Directory to empty.
+
+---
+
+## Summary
+
+| Check              | Where                         | What to do                          |
+|--------------------|--------------------------------|-------------------------------------|
+| Root Directory     | Settings → General             | Empty (not `frontend`)              |
+| DATABASE_URL       | Settings → Environment Variables| Set for Production, then redeploy   |
+| Test /api/         | Browser                        | Open `/api/` → expect JSON, not 404 |
+| Logs               | Deployments → Functions/Logs   | Read error if /api/ returns 500     |
+
+After step 1 + redeploy, test **https://stock-tracker-ten-eosin.vercel.app/api/** again.
