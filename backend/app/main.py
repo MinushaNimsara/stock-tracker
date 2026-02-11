@@ -20,8 +20,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create tables on startup (dev convenience)
-Base.metadata.create_all(bind=engine)
+# Create tables on startup (dev convenience). On Vercel, skip if no DB or fail gracefully
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    import os
+    if os.getenv("DATABASE_URL"):
+        raise  # Real DB configured but failed – surface error
+    # No DATABASE_URL (e.g. SQLite on read-only serverless) – app still loads, DB routes will fail
+    pass
 
 # Register routers (Bigger Applications style)
 app.include_router(descriptions_router)

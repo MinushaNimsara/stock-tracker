@@ -8,9 +8,12 @@ DATABASE_URL = os.getenv(
     "sqlite:///./stock_tracker.db"
 )
 
-# Fix for Neon PostgreSQL URL format
+# Fix for Neon/Supabase PostgreSQL URL format (postgres:// -> psycopg2)
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+# Ensure psycopg2 driver when only postgresql:// is given
+elif DATABASE_URL.startswith("postgresql://") and "+" not in DATABASE_URL.split("?")[0]:
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 # Create engine
 if DATABASE_URL.startswith("sqlite"):
