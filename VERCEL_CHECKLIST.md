@@ -23,7 +23,7 @@ Then go to **Deployments** → **Redeploy** the latest deployment.
 
 After redeploying, open this URL in your browser:
 
-**https://stock-tracker-ten-eosin.vercel.app/api/**
+**https://stock-tracker-phi-mocha.vercel.app/api/**
 
 - You see **`{"message":"API is running"}`** (or similar JSON) → API works. If the app still shows Network Error, hard refresh the app (Ctrl+F5) or try another page.
 - You see **404** → API is not deployed. Fix **Root Directory** (step 1) and redeploy.
@@ -31,10 +31,10 @@ After redeploying, open this URL in your browser:
 
 ---
 
-## 3. Environment variable DATABASE_URL
+## 3. Environment variable FIREBASE_SERVICE_ACCOUNT_JSON
 
 1. In the same project: **Settings** → **Environment Variables**.
-2. There must be a variable **`DATABASE_URL`** with your Neon (or Supabase) connection string.
+2. There must be a variable **`FIREBASE_SERVICE_ACCOUNT_JSON`** = full JSON from Firebase service account key.
 3. It must be set for **Production** (and Preview if you use it).
 4. If you changed it, **Redeploy** again (env vars apply on next deploy).
 
@@ -65,8 +65,8 @@ If you connected Vercel to a repo that only has the frontend folder, connect it 
 | Check              | Where                         | What to do                          |
 |--------------------|--------------------------------|-------------------------------------|
 | Root Directory     | Settings → General             | Empty (not `frontend`)              |
-| DATABASE_URL       | Settings → Environment Variables| Set for Production, then redeploy   |
+| FIREBASE_SERVICE_ACCOUNT_JSON | Settings → Environment Variables| Set for Production, then redeploy   |
 | Test /api/         | Browser                        | Open `/api/` → expect JSON, not 404 |
 | Logs               | Deployments → Functions/Logs   | Read error if /api/ returns 500     |
 
-After step 1 + redeploy, test **https://stock-tracker-ten-eosin.vercel.app/api/** again.
+After step 1 + redeploy, test **https://stock-tracker-phi-mocha.vercel.app/api/** again.

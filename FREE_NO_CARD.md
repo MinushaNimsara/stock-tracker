@@ -4,11 +4,24 @@ You have **two ways** to run the app without paying or adding a card.
 
 ---
 
-## Option 1: Free cloud database (no card needed)
+## Option 1: Firebase Firestore (recommended – no card)
 
-**Neon** and **Supabase** free plans do **not** require a credit card.
+This app uses **Firebase Firestore** as the database. Free tier, no credit card.
 
-### Neon (recommended)
+1. Create a project at [Firebase Console](https://console.firebase.google.com/), enable Firestore.
+2. Get the **service account JSON** (Project settings → Service accounts → Generate new private key).
+3. In **Vercel** → Settings → Environment Variables → add **`FIREBASE_SERVICE_ACCOUNT_JSON`** = full JSON string.
+4. Redeploy. Then POST to `/api/seed-data` once to seed default colors.
+
+Full steps: see **[FIREBASE_SETUP.md](./FIREBASE_SETUP.md)**.
+
+---
+
+## Option 1b: Neon or Supabase (legacy – app now uses Firebase)
+
+If you previously used Neon/Supabase, this project has **moved to Firebase**. Use Option 1 above. The following is kept for reference only.
+
+### Neon
 
 1. Go to **[neon.tech](https://neon.tech)** and sign up (e.g. with GitHub or email).
 2. Create a new project.

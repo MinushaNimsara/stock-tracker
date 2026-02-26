@@ -1,35 +1,49 @@
 """
 Vercel serverless entry: mounts backend API at /api.
-Set DATABASE_URL in Vercel env to your Neon PostgreSQL URL (required for DB routes).
+Set FIREBASE_SERVICE_ACCOUNT_JSON in Vercel env (full JSON string) for Firestore.
+
+Vercel expects `app` (ASGI) - not Mangum/Lambda handler.
 """
 import os
 import sys
+import traceback
 
 # Add backend to path so "from app.main" works
-backend_path = os.path.join(os.path.dirname(__file__), '..', 'backend')
+backend_path = os.path.join(os.path.dirname(__file__), "..", "backend")
 sys.path.insert(0, backend_path)
 
-try:
-    from fastapi import FastAPI
-    from mangum import Mangum
-    from app.main import app as backend_app
+from fastapi import FastAPI
 
-    app = FastAPI(title="Stock Tracker API Gateway")
-    app.mount("/api", backend_app)
-    handler = Mangum(app)
+_load_error = None
+_backend_err = None
+backend_app = None
+
+try:
+    from app.main import app as _backend_app
+
+    backend_app = _backend_app
 except Exception as e:
-    # If backend fails to load (e.g. missing DATABASE_URL, import error), expose a minimal app
-    from fastapi import FastAPI
-    from mangum import Mangum
-    app = FastAPI(title="Stock Tracker API")
-    _load_error = str(e)
+    _load_error = traceback.format_exc()
+    _backend_err = e
+    try:
+        print(_load_error, file=sys.stderr)
+    except Exception:
+        pass
+
+# Main app: mount backend at /api so /api/descriptions, /api/colors etc work
+app = FastAPI(title="Stock Tracker API Gateway")
+
+if backend_app is not None:
+    app.mount("/api", backend_app)
+else:
+    err_msg = str(_backend_err) if _backend_err else "Unknown error"
 
     @app.get("/api")
     @app.get("/api/")
     def _fail():
         return {
             "error": "Backend failed to start",
-            "hint": "Add DATABASE_URL (Neon PostgreSQL) in Vercel Environment Variables, then redeploy.",
-            "detail": _load_error,
+            "hint": "Check Vercel Function logs. Add FIREBASE_SERVICE_ACCOUNT_JSON and ensure api/requirements.txt deps are installed.",
+            "detail": err_msg,
+            "traceback": _load_error,
         }
-    handler = Mangum(app)

@@ -27,6 +27,9 @@ frontend/dist/
 .env.local
 .env.*.local
 *.local
+# Firebase service account key (never commit)
+*firebase*key*.json
+*service*account*.json
 
 # IDE / OS
 .vscode/*

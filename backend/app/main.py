@@ -1,7 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.db.database import engine
-from app.db.base import Base
 
 # Routers
 from app.routers.descriptions import router as descriptions_router
@@ -20,16 +18,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create tables on startup (dev convenience). On Vercel, skip if no DB or fail gracefully
-try:
-    Base.metadata.create_all(bind=engine)
-except Exception as e:
-    import os
-    if os.getenv("DATABASE_URL"):
-        raise  # Real DB configured but failed – surface error
-    # No DATABASE_URL (e.g. SQLite on read-only serverless) – app still loads, DB routes will fail
-    pass
-
 # Register routers (Bigger Applications style)
 app.include_router(descriptions_router)
 app.include_router(colors_router)
@@ -44,12 +32,10 @@ def seed_data():
     """
     DEV ONLY:
     Seed default A4 colors (normal) so dropdowns have values.
-    You can also add descriptions from /descriptions endpoint.
+    Uses Firestore. You can also add descriptions from /descriptions endpoint.
     """
-    from app.db.database import SessionLocal
-    from app.models.a4_color import A4Color
-    
-    db = SessionLocal()
+    from app.db import firestore_repo
+
     colors_data = [
         ("White", "#FFFFFF"),
         ("Pink", "#FFB6C1"),
@@ -62,21 +48,12 @@ def seed_data():
         ("Brown", "#8B4513"),
         ("Gray", "#808080"),
     ]
-    
-    try:
-        added = 0
-        for name, hex_code in colors_data:
-            existing = db.query(A4Color).filter(A4Color.name == name).first()
-            if not existing:
-                db.add(A4Color(name=name, hex_code=hex_code))
-                added += 1
-        db.commit()
-        return {"message": "Seed colors done", "added": added}
-    except Exception as e:
-        db.rollback()
-        return {"error": str(e)}
-    finally:
-        db.close()
+    added = 0
+    for name, hex_code in colors_data:
+        created = firestore_repo.create_color(name, hex_code)
+        if created is not None:
+            added += 1
+    return {"message": "Seed colors done", "added": added}
 
 
 # ✅ ADD THIS - Run server on all network interfaces
