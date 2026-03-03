@@ -66,6 +66,7 @@ If you connected Vercel to a repo that only has the frontend folder, connect it 
 |--------------------|--------------------------------|-------------------------------------|
 | Root Directory     | Settings → General             | Empty (not `frontend`)              |
 | FIREBASE_SERVICE_ACCOUNT_JSON | Settings → Environment Variables| Set for Production, then redeploy   |
+| MASTER_ADMIN_API_KEY | Settings → Environment Variables | Optional. Set a secret key for Admin Upload (store list). Share only with Master Admin. |
 | Test /api/         | Browser                        | Open `/api/` → expect JSON, not 404 |
 | Logs               | Deployments → Functions/Logs   | Read error if /api/ returns 500     |
 

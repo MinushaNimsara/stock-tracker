@@ -55,3 +55,6 @@ backend/nssm-*/
 
 # Vercel
 .vercel
+
+.vercel
+.env*.local

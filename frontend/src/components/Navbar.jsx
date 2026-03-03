@@ -33,6 +33,15 @@ export default function Navbar() {
         >
           📊 Monthly Report
         </Link>
+        <Link
+          to="/admin"
+          style={{
+            ...styles.navLink,
+            ...(location.pathname === '/admin' ? styles.activeLink : {}),
+          }}
+        >
+          🛠️ Admin
+        </Link>
       </div>
     </nav>
   );

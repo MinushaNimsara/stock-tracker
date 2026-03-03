@@ -2,9 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import StoreEntry from './pages/StoreEntry';
 import MonthlyReport from './pages/MonthlyReport';
-import MonthlyReportExcelView from './pages/MonthlyReportExcelView';
-
-<Route path="/report" element={<MonthlyReportExcelView />} />
+import AdminUpload from './pages/AdminUpload';
 
 function App() {
   return (
@@ -13,6 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<StoreEntry />} />
         <Route path="/report" element={<MonthlyReport />} />
+        <Route path="/admin" element={<AdminUpload />} />
       </Routes>
     </BrowserRouter>
   );

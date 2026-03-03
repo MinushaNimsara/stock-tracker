@@ -1,4 +1,6 @@
 # Don't upload venv and heavy deps; Vercel installs from api/requirements.txt
+# Exclude root pyproject.toml so Vercel uses api/requirements.txt + defaults to Python 3.12
+pyproject.toml
 backend/.venv
 backend/node_modules
 backend/__pycache__

@@ -71,6 +71,21 @@ def update_description_opening_stock(description_id: int, opening_stock: int):
     return True
 
 
+def update_description(db, description_id: int, name: str | None = None, opening_stock: int | None = None):
+    """Update description by id. None values are not updated."""
+    docs = list(db.collection(COLL_DESCRIPTIONS).where("id", "==", description_id).limit(1).stream())
+    if not docs:
+        return False
+    updates = {}
+    if name is not None:
+        updates["name"] = name.strip()
+    if opening_stock is not None:
+        updates["opening_stock"] = int(opening_stock)
+    if updates:
+        docs[0].reference.update(updates)
+    return True
+
+
 # --- Colors ---
 def list_colors():
     db = get_firestore()

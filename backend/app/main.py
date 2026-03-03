@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers.descriptions import router as descriptions_router
 from app.routers.colors import router as colors_router
 from app.routers.stock_entries import router as stock_router
+from app.routers.admin_upload import router as admin_upload_router
 
 app = FastAPI(title="A4 Format Stock Tracker API")
 
@@ -22,6 +23,7 @@ app.add_middleware(
 app.include_router(descriptions_router)
 app.include_router(colors_router)
 app.include_router(stock_router)
+app.include_router(admin_upload_router)
 
 @app.get("/")
 def root():

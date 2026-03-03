@@ -35,6 +35,16 @@ export const api = {
   getMonthlyReportByYearMonth: (year, month) =>
     apiClient.get(`/stock/monthly/${year}-${String(month).padStart(2, '0')}`),
 
+  // Master Admin: upload store list (CSV)
+  uploadStoreList: (file, masterAdminKey) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const url = (apiClient.defaults.baseURL || '') + '/admin/upload-store-list';
+    return axios.post(url, formData, {
+      headers: { 'X-Master-Admin-Key': masterAdminKey },
+    });
+  },
+
   // Download Excel
   downloadMonthlyReportExcel: async (year, month) => {
     try {
