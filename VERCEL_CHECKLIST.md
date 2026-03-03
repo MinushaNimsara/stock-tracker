@@ -11,11 +11,11 @@ If this is wrong, the API is never deployed and `/api` returns 404 → "Network 
 1. Go to [vercel.com](https://vercel.com) → your **stock-tracker** project.
 2. **Settings** → **General**.
 3. Find **Root Directory**.
-4. It must be **empty** (or `.`).  
-   If it is **`frontend`**, clear it and leave it empty.
-5. Save.
-
-Then go to **Deployments** → **Redeploy** the latest deployment.
+4. Set it correctly:
+   - **Repo root** has `vercel.json`, `api/`, `frontend/`, `backend/` → leave **empty** (or `.`)
+   - **Repo root** is parent (e.g. "Stock Tracker") and code is in `a4-format-stock-tracker/` → set **`a4-format-stock-tracker`**
+5. Save. If you see "Root Directory does not exist", the path is wrong for your repo structure.
+6. Go to **Deployments** → **Redeploy**.
 
 ---
 
