@@ -45,13 +45,6 @@ export default function StoreEntry() {
 
       setDescriptions(descRes.data);
       setColors(colorRes.data);
-
-      if (colorRes.data.length > 0) {
-        const whiteColor = colorRes.data.find((c) => c.name === 'White');
-        if (whiteColor) {
-          setFormData((prev) => ({ ...prev, color_id: whiteColor.id }));
-        }
-      }
     } catch (error) {
       console.error('Error loading dropdowns:', error);
       setMessage('⚠️ Error loading data. Check backend.');
@@ -60,10 +53,13 @@ export default function StoreEntry() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name.includes('_qty') || name.includes('_id') ? Number(value) || 0 : value,
-    }));
+    let parsed = value;
+    if (name === 'color_id') {
+      parsed = value === '' ? '' : Number(value);
+    } else if (name.includes('_qty') || (name.includes('_id') && name !== 'color_id')) {
+      parsed = Number(value) || 0;
+    }
+    setFormData((prev) => ({ ...prev, [name]: parsed }));
   };
 
   // ==================== PURCHASE MODAL ====================
@@ -178,7 +174,7 @@ export default function StoreEntry() {
       setFormData({
         entry_date: new Date().toISOString().split('T')[0],
         description_id: '',
-        color_id: colors.find((c) => c.name === 'White')?.id || '',
+        color_id: '',
         purchase_qty: 0,
         usage_qty: 0,
         reason: '',
@@ -314,9 +310,9 @@ export default function StoreEntry() {
             )}
           </div>
 
-          {/* A4 Color */}
+          {/* Color */}
           <div style={styles.field}>
-            <label style={styles.label}>🎨 A4 Color</label>
+            <label style={styles.label}>🎨 Color *</label>
             <select
               name="color_id"
               value={formData.color_id}
@@ -324,7 +320,7 @@ export default function StoreEntry() {
               required
               style={styles.select}
             >
-              <option value="">Select Color</option>
+              <option value="">Select color</option>
               {colors.map((color) => (
                 <option key={color.id} value={color.id}>
                   {color.name}

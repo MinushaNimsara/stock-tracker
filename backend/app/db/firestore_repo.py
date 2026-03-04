@@ -159,6 +159,45 @@ def get_stock_entries_for_month(db, description_id: int, year: int, month: int):
     return [d.to_dict() for d in docs]
 
 
+def list_stock_entries(db, start_date: str | None = None, end_date: str | None = None, limit: int = 200):
+    """List stock entries, optionally filtered by date range. Returns newest first."""
+    docs = list(db.collection(COLL_STOCK).order_by("entry_date", direction="DESCENDING").limit(limit * 2 if (start_date or end_date) else limit).stream())
+    entries = [d.to_dict() for d in docs]
+    if start_date:
+        entries = [e for e in entries if (e.get("entry_date") or "") >= start_date]
+    if end_date:
+        entries = [e for e in entries if (e.get("entry_date") or "") <= end_date]
+    return entries[:limit]
+
+
+def get_stock_entry_by_id(db, entry_id: int):
+    docs = list(db.collection(COLL_STOCK).where("id", "==", entry_id).limit(1).stream())
+    if not docs:
+        return None
+    return docs[0].to_dict()
+
+
+def update_stock_entry(db, entry_id: int, **kwargs):
+    docs = list(db.collection(COLL_STOCK).where("id", "==", entry_id).limit(1).stream())
+    if not docs:
+        return False
+    allowed = {"entry_date", "description_id", "color_id", "purchase_qty", "usage_qty", "reason"}
+    updates = {k: v for k, v in kwargs.items() if k in allowed and v is not None}
+    if "entry_date" in updates and hasattr(updates["entry_date"], "isoformat"):
+        updates["entry_date"] = updates["entry_date"].isoformat()
+    if updates:
+        docs[0].reference.update(updates)
+    return True
+
+
+def delete_stock_entry(db, entry_id: int):
+    docs = list(db.collection(COLL_STOCK).where("id", "==", entry_id).limit(1).stream())
+    if not docs:
+        return False
+    docs[0].reference.delete()
+    return True
+
+
 def get_all_descriptions_ordered(db):
     docs = db.collection(COLL_DESCRIPTIONS).order_by("id").stream()
     return [d.to_dict() for d in docs]

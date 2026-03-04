@@ -11,6 +11,15 @@ class StockEntryCreate(BaseModel):
     reason: str | None = None
 
 
+class StockEntryUpdate(BaseModel):
+    entry_date: date | None = None
+    description_id: int | None = None
+    color_id: int | None = None
+    purchase_qty: int | None = Field(default=None, ge=0)
+    usage_qty: int | None = Field(default=None, ge=0)
+    reason: str | None = None
+
+
 class StockEntryRead(BaseModel):
     id: int
     entry_date: date

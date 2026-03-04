@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.auth_deps import get_current_user_payload, require_admin
 from app.db import firestore_repo
 from app.db.firestore_client import get_firestore
-from app.schemas.usage_entry import StockEntryCreate, StockEntryRead, MonthlyReportResponse, MonthlyReportRow
+from app.schemas.usage_entry import StockEntryCreate, StockEntryRead, StockEntryUpdate, MonthlyReportResponse, MonthlyReportRow
 
 router = APIRouter(prefix="/stock", tags=["stock"])
 
@@ -38,6 +38,50 @@ def create_stock_entry(payload: StockEntryCreate, _: dict = Depends(get_current_
         usage_qty=doc["usage_qty"],
         reason=doc.get("reason"),
     )
+
+
+@router.get("/entries", response_model=List[StockEntryRead])
+def list_stock_entries(
+    start: str | None = None,
+    end: str | None = None,
+    limit: int = 200,
+    _: dict = Depends(require_admin),
+):
+    """List stock entries (admin only). Optional query: start=YYYY-MM-DD, end=YYYY-MM-DD"""
+    db = get_firestore()
+    entries = firestore_repo.list_stock_entries(db, start_date=start, end_date=end, limit=limit)
+    return [StockEntryRead(**e) for e in entries]
+
+
+@router.get("/entries/{entry_id}", response_model=StockEntryRead)
+def get_stock_entry(entry_id: int, _: dict = Depends(require_admin)):
+    db = get_firestore()
+    entry = firestore_repo.get_stock_entry_by_id(db, entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    return StockEntryRead(**entry)
+
+
+@router.patch("/entries/{entry_id}", response_model=StockEntryRead)
+def update_stock_entry(entry_id: int, payload: StockEntryUpdate, _: dict = Depends(require_admin)):
+    db = get_firestore()
+    entry = firestore_repo.get_stock_entry_by_id(db, entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    updates = payload.model_dump(exclude_unset=True)
+    if updates:
+        firestore_repo.update_stock_entry(db, entry_id, **updates)
+    entry = firestore_repo.get_stock_entry_by_id(db, entry_id)
+    return StockEntryRead(**entry)
+
+
+@router.delete("/entries/{entry_id}", status_code=204)
+def delete_stock_entry(entry_id: int, _: dict = Depends(require_admin)):
+    db = get_firestore()
+    ok = firestore_repo.delete_stock_entry(db, entry_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    return None
 
 
 def _build_monthly_report(year_month: str) -> MonthlyReportResponse:

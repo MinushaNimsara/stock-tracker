@@ -61,6 +61,10 @@ export const api = {
 
   // Stock entries
   createStockEntry: (data) => apiClient.post('/stock', data),
+  listStockEntries: (params) => apiClient.get('/stock/entries', { params }),
+  getStockEntry: (id) => apiClient.get(`/stock/entries/${id}`),
+  updateStockEntry: (id, data) => apiClient.patch(`/stock/entries/${id}`, data),
+  deleteStockEntry: (id) => apiClient.delete(`/stock/entries/${id}`),
   getMonthlyReport: (yearMonth) => apiClient.get(`/stock/monthly/${yearMonth}`),
 
   // For Excel-style report
