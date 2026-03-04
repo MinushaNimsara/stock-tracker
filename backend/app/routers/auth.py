@@ -69,22 +69,30 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
 
 @router.get("/reset-admin")
 @router.post("/reset-admin")
-def reset_admin(key: str = Query(..., alias="key")):
-    """Reset admin password to RLA_store_8585. Requires RESET_ADMIN_KEY in env."""
+def reset_admin(key: str = Query("", alias="key")):
+    """Reset admin password to RLA_store_8585. Add ?key=YOUR_RESET_ADMIN_KEY"""
     expected = os.getenv("RESET_ADMIN_KEY")
-    if not expected or key != expected:
-        raise HTTPException(status_code=403, detail="Invalid key")
-    user = firestore_repo.get_user_by_username("admin")
-    if not user:
-        firestore_repo.create_user(
-            username="admin",
-            password_hash=hash_password(MASTER_ADMIN_PASS),
-            role="admin",
-            active=True,
+    if not expected:
+        raise HTTPException(
+            status_code=503,
+            detail="RESET_ADMIN_KEY not set in Vercel. Add it in Environment Variables, then redeploy.",
         )
-        return {"message": "Admin user created"}
-    firestore_repo.update_user_password(user["id"], hash_password(MASTER_ADMIN_PASS))
-    return {"message": "Admin password reset to RLA_store_8585"}
+    if not key or key != expected:
+        raise HTTPException(status_code=403, detail="Add ?key=your_reset_key (must match RESET_ADMIN_KEY)")
+    try:
+        user = firestore_repo.get_user_by_username("admin")
+        if not user:
+            firestore_repo.create_user(
+                username="admin",
+                password_hash=hash_password(MASTER_ADMIN_PASS),
+                role="admin",
+                active=True,
+            )
+            return {"message": "Admin user created. Login with admin / RLA_store_8585"}
+        firestore_repo.update_user_password(user["id"], hash_password(MASTER_ADMIN_PASS))
+        return {"message": "Admin password reset. Login with admin / RLA_store_8585"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reset failed: {str(e)}")
 
 
 @router.get("/me")
