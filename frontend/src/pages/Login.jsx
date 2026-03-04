@@ -62,6 +62,7 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             style={styles.input}
             autoComplete="current-password"
+            maxLength={72}
             required
           />
           {error && <p style={styles.error}>{error}</p>}
