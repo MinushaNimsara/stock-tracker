@@ -1,9 +1,11 @@
 """Upload store list (CSV or Excel) to update descriptions and opening stock. Admin only."""
+import base64
 import csv
 import io
 from itertools import zip_longest
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from pydantic import BaseModel
 
 from app.auth_deps import require_admin
 from app.db import firestore_repo
@@ -93,20 +95,18 @@ def _process_rows(rows: list[dict]) -> tuple[int, int, list[str]]:
     return updated, created, errors
 
 
-@router.post("/upload-store-list")
-async def upload_store_list(
-    file: UploadFile = File(...),
-    _: dict = Depends(require_admin),
-):
-    """Upload CSV or Excel (.xlsx) with columns: Description, Opening Stock (or similar)."""
-    fn = (file.filename or "").lower()
+class Base64Upload(BaseModel):
+    """Base64-encoded file content (avoids multipart; works better on Vercel serverless)."""
+    content: str  # base64-encoded file bytes
+    filename: str
+
+
+def _process_upload_content(content: bytes, filename: str) -> dict:
+    fn = (filename or "").lower()
     if not fn.endswith(".csv") and not fn.endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="File must be CSV or Excel (.xlsx)")
-
-    content = file.file.read()
     is_excel = content[:2] == b"PK" or fn.endswith(".xlsx")
     rows = _parse_excel(content) if is_excel else _parse_csv(content)
-
     updated, created, errors = _process_rows(rows)
     return {
         "message": "Store list processed",
@@ -114,3 +114,26 @@ async def upload_store_list(
         "created": created,
         "errors": errors[:20],
     }
+
+
+@router.post("/upload-store-list-base64")
+async def upload_store_list_base64(
+    body: Base64Upload,
+    _: dict = Depends(require_admin),
+):
+    """Upload via base64 JSON (more reliable on Vercel serverless)."""
+    try:
+        content = base64.b64decode(body.content)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 content")
+    return _process_upload_content(content, body.filename)
+
+
+@router.post("/upload-store-list")
+async def upload_store_list(
+    file: UploadFile = File(...),
+    _: dict = Depends(require_admin),
+):
+    """Upload CSV or Excel (.xlsx) with columns: Description, Opening Stock (or similar)."""
+    content = await file.read()
+    return _process_upload_content(content, file.filename or "file.csv")

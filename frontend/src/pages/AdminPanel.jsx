@@ -159,7 +159,10 @@ export default function AdminPanel() {
   };
 
   const handleUploadStoreList = async (e) => {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setMessage('');
     setUploadResult(null);
     if (!uploadFile) {
@@ -174,7 +177,9 @@ export default function AdminPanel() {
       setMessage('');
       loadData();
     } catch (err) {
-      setMessage(err.response?.data?.detail || 'Upload failed');
+      const d = err.response?.data?.detail;
+      const msg = Array.isArray(d) ? d.map((x) => x?.msg || JSON.stringify(x)).join('; ') : (typeof d === 'string' ? d : err.message || 'Upload failed');
+      setMessage(msg);
     } finally {
       setUploadLoading(false);
     }
@@ -441,17 +446,22 @@ export default function AdminPanel() {
             Upload CSV or Excel (.xlsx) with <b>Description</b> and <b>Opening Stock</b> columns.
             Existing descriptions are updated; new ones are created.
           </p>
-          <form onSubmit={handleUploadStoreList} style={styles.formRow}>
+          <div style={styles.formRow}>
             <input
               type="file"
               accept=".csv,.xlsx"
               onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
               style={styles.fileInput}
             />
-            <button type="submit" disabled={uploadLoading || !uploadFile} style={styles.btn}>
+            <button
+              type="button"
+              disabled={uploadLoading || !uploadFile}
+              onClick={(e) => { e.preventDefault(); handleUploadStoreList(e); }}
+              style={styles.btn}
+            >
               {uploadLoading ? 'Uploading...' : 'Upload & Update'}
             </button>
-          </form>
+          </div>
           {uploadResult && (
             <div style={{ marginTop: 16, padding: 12, background: '#f0fdf4', borderRadius: 8 }}>
               <p style={{ margin: 0, color: '#15803d', fontWeight: 600 }}>Done</p>

@@ -19,6 +19,10 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // FormData needs browser-set Content-Type (multipart/form-data with boundary)
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;
 });
 
@@ -71,10 +75,20 @@ export const api = {
   getMonthlyReportByYearMonth: (year, month) =>
     apiClient.get(`/stock/monthly/${year}-${String(month).padStart(2, '0')}`),
 
-  uploadStoreList: (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return apiClient.post('/admin/upload-store-list', formData);
+  uploadStoreList: async (file) => {
+    // Use base64 JSON - more reliable on Vercel serverless (avoids multipart parsing)
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 0x8000;
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    const base64 = btoa(binary);
+    return apiClient.post('/admin/upload-store-list-base64', {
+      content: base64,
+      filename: file.name || 'upload.csv',
+    });
   },
 
   // Download Excel
