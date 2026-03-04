@@ -20,14 +20,29 @@ def create_user(
     role: str = Body("user"),
     _: dict = Depends(require_admin),
 ):
-    created = firestore_repo.create_user(
-        username=username,
-        password_hash=hash_password(password),
-        role=role,
-    )
-    if not created:
-        raise HTTPException(status_code=400, detail="Username already exists")
-    return created
+    username = (username or "").strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="Username is required")
+    if not password:
+        raise HTTPException(status_code=400, detail="Password is required")
+    if role not in ("user", "admin"):
+        raise HTTPException(status_code=400, detail="Role must be 'user' or 'admin'")
+    try:
+        created = firestore_repo.create_user(
+            username=username,
+            password_hash=hash_password(password),
+            role=role,
+        )
+        if not created:
+            raise HTTPException(status_code=400, detail="Username already exists")
+        return created
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Cannot create user: {str(e)}",
+        )
 
 
 @router.patch("/{user_id}/role")

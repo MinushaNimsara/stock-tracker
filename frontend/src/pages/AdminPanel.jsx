@@ -76,7 +76,15 @@ export default function AdminPanel() {
       setNewRole('user');
       loadData();
     } catch (err) {
-      setMessage(err.response?.data?.detail || 'Failed to create user');
+      const d = err.response?.data?.detail;
+      const msg = Array.isArray(d)
+        ? d.map((x) => x?.msg || JSON.stringify(x)).join('; ')
+        : typeof d === 'string'
+          ? d
+          : err.response?.status === 400
+            ? 'Username may already exist. Try a different username.'
+            : err.message || 'Failed to create user. Check connection.';
+      setMessage(msg);
     }
   };
 
@@ -268,7 +276,12 @@ export default function AdminPanel() {
         <button style={{ ...styles.tab, ...(tab === TABS.UPLOAD ? styles.tabActive : {}) }} onClick={() => setTab(TABS.UPLOAD)}>Upload</button>
       </div>
 
-      {message && <p style={styles.message}>{message}</p>}
+      {message && (
+        <p style={{
+          ...styles.message,
+          color: /fail|error|already exist|required|invalid/i.test(message) ? '#b91c1c' : styles.message.color,
+        }}>{message}</p>
+      )}
       {loading && <p>Loading...</p>}
 
       {tab === TABS.USERS && (
