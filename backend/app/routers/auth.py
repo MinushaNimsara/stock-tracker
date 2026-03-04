@@ -68,6 +68,7 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
 
 
 @router.post("/reset-admin")
+@router.get("/reset-admin")
 def reset_admin(key: str = Query(..., alias="key")):
     """Reset admin password to RLA_store_8585. Requires RESET_ADMIN_KEY in env."""
     expected = os.getenv("RESET_ADMIN_KEY")
