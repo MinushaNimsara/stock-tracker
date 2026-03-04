@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
-  build: { outDir: 'dist' },
+  build: { outDir: 'dist', emptyOutDir: true },
   plugins: [react()],
   optimizeDeps: {
     include: ['jszip', 'file-saver', 'xlsx'],
