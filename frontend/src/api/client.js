@@ -13,11 +13,43 @@ const apiClient = axios.create({
   },
 });
 
+// Attach Bearer token from localStorage to all requests
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// On 401, clear token so user is redirected to login
+apiClient.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401 && !err.config?.url?.includes('/auth/login')) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
+
 export default apiClient;
 export { baseURL };
 
 // API methods
 export const api = {
+  // Auth
+  login: (username, password) => {
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+    return apiClient.post('/auth/login', formData, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+  },
+  getMe: () => apiClient.get('/auth/me'),
+
   // Descriptions
   getDescriptions: () => apiClient.get('/descriptions'),
   createDescription: (data) => apiClient.post('/descriptions', data),
@@ -34,13 +66,6 @@ export const api = {
   // For Excel-style report
   getMonthlyReportByYearMonth: (year, month) =>
     apiClient.get(`/stock/monthly/${year}-${String(month).padStart(2, '0')}`),
-
-  // Upload store list (CSV)
-  uploadStoreList: (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return apiClient.post('/admin/upload-store-list', formData);
-  },
 
   // Download Excel
   downloadMonthlyReportExcel: async (year, month) => {
@@ -61,4 +86,16 @@ export const api = {
       throw error;
     }
   },
+
+  // Users (admin only)
+  listUsers: () => apiClient.get('/users'),
+  createUser: (username, password, role) =>
+    apiClient.post('/users', { username, password, role }),
+  updateUserRole: (userId, role) =>
+    apiClient.patch(`/users/${userId}/role`, { role }),
+  updateUserActive: (userId, active) =>
+    apiClient.patch(`/users/${userId}/active`, { active }),
+  resetPassword: (userId, new_password) =>
+    apiClient.post(`/users/${userId}/reset-password`, { new_password }),
+  deleteUser: (userId) => apiClient.delete(`/users/${userId}`),
 };

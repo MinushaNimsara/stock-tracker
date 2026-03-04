@@ -1,8 +1,11 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout, isAdmin } = useAuth();
 
   return (
     <nav style={styles.nav}>
@@ -15,33 +18,45 @@ export default function Navbar() {
       </div>
 
       <div style={styles.navLinks}>
-        <Link
-          to="/"
-          style={{
-            ...styles.navLink,
-            ...(location.pathname === '/' ? styles.activeLink : {}),
-          }}
-        >
-          📝 Store Entry
-        </Link>
-        <Link
-          to="/report"
-          style={{
-            ...styles.navLink,
-            ...(location.pathname === '/report' ? styles.activeLink : {}),
-          }}
-        >
-          📊 Monthly Report
-        </Link>
-        <Link
-          to="/admin"
-          style={{
-            ...styles.navLink,
-            ...(location.pathname === '/admin' ? styles.activeLink : {}),
-          }}
-        >
-          🛠️ Admin
-        </Link>
+        {user ? (
+          <>
+            <Link
+              to="/"
+              style={{
+                ...styles.navLink,
+                ...(location.pathname === '/' ? styles.activeLink : {}),
+              }}
+            >
+              📝 Store Entry
+            </Link>
+            <Link
+              to="/report"
+              style={{
+                ...styles.navLink,
+                ...(location.pathname === '/report' ? styles.activeLink : {}),
+              }}
+            >
+              📊 Monthly Report
+            </Link>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                style={{
+                  ...styles.navLink,
+                  ...(location.pathname === '/admin' ? styles.activeLink : {}),
+                }}
+              >
+                🛠️ Admin
+              </Link>
+            )}
+            <span style={styles.userSpan}>{user.username}</span>
+            <button onClick={() => { logout(); navigate('/login'); }} style={styles.logoutBtn}>
+              Logout
+            </button>
+          </>
+        ) : (
+          <Link to="/login" style={styles.navLink}>Login</Link>
+        )}
       </div>
     </nav>
   );
@@ -109,5 +124,15 @@ const styles = {
     backgroundColor: '#fff',
     color: '#1a237e',
     boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+  },
+  userSpan: { color: '#b0bec5', fontSize: '0.9rem', padding: '0 8px' },
+  logoutBtn: {
+    padding: '0.5rem 1rem',
+    background: 'rgba(255,255,255,0.2)',
+    color: '#fff',
+    border: '1px solid rgba(255,255,255,0.5)',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontSize: 14,
   },
 };

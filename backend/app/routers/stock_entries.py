@@ -1,8 +1,9 @@
 from datetime import date
 from typing import List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.auth_deps import get_current_user_payload, require_admin
 from app.db import firestore_repo
 from app.db.firestore_client import get_firestore
 from app.schemas.usage_entry import StockEntryCreate, StockEntryRead, MonthlyReportResponse, MonthlyReportRow
@@ -11,7 +12,7 @@ router = APIRouter(prefix="/stock", tags=["stock"])
 
 
 @router.post("", response_model=StockEntryRead, status_code=201)
-def create_stock_entry(payload: StockEntryCreate):
+def create_stock_entry(payload: StockEntryCreate, _: dict = Depends(get_current_user_payload)):
     db = get_firestore()
     desc = firestore_repo.get_description_by_id(db, payload.description_id)
     if not desc:
@@ -39,8 +40,8 @@ def create_stock_entry(payload: StockEntryCreate):
     )
 
 
-@router.get("/monthly/{year_month}", response_model=MonthlyReportResponse)
-def get_monthly_report(year_month: str):
+def _build_monthly_report(year_month: str) -> MonthlyReportResponse:
+    """Internal helper to build report (used by route and update-opening-stock)."""
     try:
         year, month = year_month.split("-")
         year, month = int(year), int(month)
@@ -72,7 +73,6 @@ def get_monthly_report(year_month: str):
         total_usage = 0
 
         for entry in entries:
-            # entry_date is "YYYY-MM-DD" string
             day = int(entry["entry_date"].split("-")[2])
             purchase_key = f"purchase_day_{day:02d}"
             usage_key = f"usage_day_{day:02d}"
@@ -99,8 +99,13 @@ def get_monthly_report(year_month: str):
     )
 
 
+@router.get("/monthly/{year_month}", response_model=MonthlyReportResponse)
+def get_monthly_report(year_month: str, _: dict = Depends(get_current_user_payload)):
+    return _build_monthly_report(year_month)
+
+
 @router.post("/update-opening-stock/{year_month}")
-def update_opening_stock_for_month(year_month: str):
+def update_opening_stock_for_month(year_month: str, _: dict = Depends(require_admin)):
     """
     Updates opening stock for next month based on this month's closing stock.
     Example: After January ends, call this to set February opening = January closing.
@@ -111,7 +116,7 @@ def update_opening_stock_for_month(year_month: str):
     except (ValueError, IndexError):
         raise HTTPException(status_code=400, detail="Invalid format. Use YYYY-MM")
 
-    report = get_monthly_report(year_month)
+    report = _build_monthly_report(year_month)
     db = get_firestore()
 
     for row in report.data:
