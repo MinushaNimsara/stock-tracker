@@ -57,14 +57,14 @@ def seed_data():
     Master admin: username=admin, password=RLA_store_8585
     """
     from app.db import firestore_repo
-    from app.core.auth import hash_password
+    from app.core.auth import MASTER_ADMIN_HASH
 
     # Seed master admin if no users exist
     existing_users = firestore_repo.list_users()
     if not existing_users:
         firestore_repo.create_user(
             username="admin",
-            password_hash=hash_password("RLA_store_8585"),
+            password_hash=MASTER_ADMIN_HASH,
             role="admin",
             active=True,
         )

@@ -3,7 +3,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.auth import create_token, decode_token, verify_password, hash_password
+from app.core.auth import create_token, decode_token, verify_password, hash_password, MASTER_ADMIN_HASH
 from app.db import firestore_repo
 from app.auth_deps import get_current_user_payload
 
@@ -24,7 +24,7 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
         if not existing_users and username == MASTER_ADMIN_USER and password == MASTER_ADMIN_PASS:
             created = firestore_repo.create_user(
                 username=MASTER_ADMIN_USER,
-                password_hash=hash_password(MASTER_ADMIN_PASS),
+                password_hash=MASTER_ADMIN_HASH,
                 role="admin",
                 active=True,
             )
@@ -55,7 +55,7 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
     if not ok:
         # Master admin recovery: fix corrupted hash if password is correct
         if user.get("username") == MASTER_ADMIN_USER and password == MASTER_ADMIN_PASS:
-            firestore_repo.update_user_password(user["id"], hash_password(MASTER_ADMIN_PASS))
+            firestore_repo.update_user_password(user["id"], MASTER_ADMIN_HASH)
         else:
             raise HTTPException(status_code=401, detail="Invalid username or password")
     token = create_token(sub=user["username"], role=user.get("role", "user"))
@@ -84,12 +84,12 @@ def reset_admin(key: str = Query("", alias="key")):
         if not user:
             firestore_repo.create_user(
                 username="admin",
-                password_hash=hash_password(MASTER_ADMIN_PASS),
+                password_hash=MASTER_ADMIN_HASH,
                 role="admin",
                 active=True,
             )
             return {"message": "Admin user created. Login with admin / RLA_store_8585"}
-        firestore_repo.update_user_password(user["id"], hash_password(MASTER_ADMIN_PASS))
+        firestore_repo.update_user_password(user["id"], MASTER_ADMIN_HASH)
         return {"message": "Admin password reset. Login with admin / RLA_store_8585"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Reset failed: {str(e)}")

@@ -11,6 +11,9 @@ DEFAULT_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Pre-computed hash for RLA_store_8585 - avoids bcrypt issues in reset-admin
+MASTER_ADMIN_HASH = "$2b$12$m2L1VXDiXjcWB625aGhpZ.f91K1YzbmqVLAu//j2ExvRyXOJgBTLW"
+
 
 def hash_password(password: str) -> str:
     # bcrypt limit is 72 bytes
