@@ -13,7 +13,6 @@ export default function Navbar() {
         <img src={logo} alt="RLA Logo" style={styles.logoImage} />
         <div style={styles.brandInfo}>
           <h1 style={styles.brandName}>Rich Light Apparels</h1>
-          <p style={styles.brandTagline}>A4 Format Stock Management System</p>
         </div>
       </div>
 
@@ -99,12 +98,6 @@ const styles = {
     fontSize: '1.6rem',
     fontWeight: '700',
     letterSpacing: '0.5px',
-  },
-  brandTagline: {
-    margin: 0,
-    color: '#b0bec5',
-    fontSize: '0.85rem',
-    fontWeight: '400',
   },
   navLinks: {
     display: 'flex',

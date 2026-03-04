@@ -200,7 +200,6 @@ export default function StoreEntry() {
         <div style={styles.headerContent}>
           <div>
             <h1 style={styles.title}>📦 Store Entry</h1>
-            <p style={styles.subtitle}>Record daily A4 format stock transactions</p>
           </div>
           <div style={styles.actionButtons}>
             <button
@@ -572,11 +571,6 @@ const styles = {
     color: '#fff',
     fontSize: '2rem',
     fontWeight: '700',
-  },
-  subtitle: {
-    margin: '8px 0 0 0',
-    color: '#bfdbfe',
-    fontSize: '1rem',
   },
   actionButtons: {
     display: 'flex',
