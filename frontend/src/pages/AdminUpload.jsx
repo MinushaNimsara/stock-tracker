@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { api } from '../api/client';
 
 export default function AdminUpload() {
-  const [masterKey, setMasterKey] = useState('');
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -12,17 +11,13 @@ export default function AdminUpload() {
     e.preventDefault();
     setError('');
     setResult(null);
-    if (!masterKey.trim()) {
-      setError('Master Admin Key is required');
-      return;
-    }
     if (!file) {
       setError('Please select a CSV file');
       return;
     }
     setLoading(true);
     try {
-      const res = await api.uploadStoreList(file, masterKey.trim());
+      const res = await api.uploadStoreList(file);
       setResult(res.data);
       setFile(null);
     } catch (err) {
@@ -36,7 +31,7 @@ export default function AdminUpload() {
     <div style={styles.wrap}>
       <h2 style={styles.title}>Upload Store List</h2>
       <p style={styles.subtitle}>
-        Master Admin only. Upload a CSV with <b>Description</b> and <b>Opening Stock</b> columns.
+        Upload a CSV with <b>Description</b> and <b>Opening Stock</b> columns.
         If a description exists, its opening stock is updated; otherwise a new one is created.
         Accepted column names: Description/Name/Item, Opening Stock/Stock/Qty.
       </p>
@@ -61,17 +56,6 @@ export default function AdminUpload() {
       </p>
 
       <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.field}>
-          <label style={styles.label}>Master Admin Key</label>
-          <input
-            type="password"
-            placeholder="Enter Master Admin Key"
-            value={masterKey}
-            onChange={(e) => setMasterKey(e.target.value)}
-            style={styles.input}
-            autoComplete="off"
-          />
-        </div>
         <div style={styles.field}>
           <label style={styles.label}>CSV File</label>
           <input

@@ -1,39 +1,20 @@
 """
-Master Admin only: upload store list (CSV) to update descriptions and opening stock.
-Protected by X-Master-Admin-Key header (set MASTER_ADMIN_API_KEY in env).
+Upload store list (CSV) to update descriptions and opening stock.
 """
 import csv
 import io
-import os
 
-from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.db import firestore_repo
 from app.db.firestore_client import get_firestore
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-MASTER_ADMIN_API_KEY = os.getenv("MASTER_ADMIN_API_KEY", "").strip()
-
-
-async def require_master_admin(
-    x_key: str | None = Header(None, alias="X-Master-Admin-Key"),
-):
-    if not MASTER_ADMIN_API_KEY:
-        raise HTTPException(
-            status_code=503,
-            detail="Master admin upload not configured. Set MASTER_ADMIN_API_KEY in environment.",
-        )
-    if not x_key or x_key != MASTER_ADMIN_API_KEY:
-        raise HTTPException(status_code=403, detail="Master admin access required")
-
 
 @router.post("/upload-store-list")
-async def upload_store_list(
-    file: UploadFile = File(...),
-    _: None = Depends(require_master_admin),
-):
-    """Upload CSV with columns: Description, Opening Stock (or similar). Master Admin only."""
+async def upload_store_list(file: UploadFile = File(...)):
+    """Upload CSV with columns: Description, Opening Stock (or similar)."""
 
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="File must be a CSV")
