@@ -6,6 +6,10 @@
       "NIXPACKS_PYTHON_VERSION": "3.12"
     }
   },
+  "builds": [
+    { "src": "package.json", "use": "@vercel/static-build", "config": { "distDir": "public" } },
+    { "src": "api/**/*.py", "use": "@vercel/python" }
+  ],
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "public",
   "rewrites": [
