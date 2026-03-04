@@ -1,18 +1,13 @@
 {
   "version": 2,
-  "framework": null,
   "build": {
     "env": {
       "UV_PYTHON": "3.12",
       "NIXPACKS_PYTHON_VERSION": "3.12"
     }
   },
-  "builds": [
-    { "src": "frontend/package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } },
-    { "src": "api/**/*.py", "use": "@vercel/python" }
-  ],
   "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
+  "outputDirectory": "public",
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
     { "source": "/api", "destination": "/api" },
