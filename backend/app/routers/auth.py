@@ -38,8 +38,17 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
 
     if not user or not user.get("active", True):
         raise HTTPException(status_code=401, detail="Invalid username or password")
-    if not verify_password(password, user.get("password_hash", "")):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+    stored_hash = user.get("password_hash") or ""
+    try:
+        ok = stored_hash and verify_password(password, stored_hash)
+    except Exception:
+        ok = False  # Corrupted hash or bcrypt error
+    if not ok:
+        # Master admin recovery: fix corrupted hash if password is correct
+        if user.get("username") == MASTER_ADMIN_USER and password == MASTER_ADMIN_PASS:
+            firestore_repo.update_user_password(user["id"], hash_password(MASTER_ADMIN_PASS))
+        else:
+            raise HTTPException(status_code=401, detail="Invalid username or password")
     token = create_token(sub=user["username"], role=user.get("role", "user"))
     return {
         "access_token": token,
