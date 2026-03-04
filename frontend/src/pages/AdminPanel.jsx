@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 
-const TABS = { USERS: 'users', DESCRIPTIONS: 'descriptions', COLORS: 'colors' };
+const TABS = { USERS: 'users', DESCRIPTIONS: 'descriptions', COLORS: 'colors', UPLOAD: 'upload' };
 
 export default function AdminPanel() {
   const [tab, setTab] = useState(TABS.USERS);
@@ -25,6 +25,11 @@ export default function AdminPanel() {
   // Color form
   const [newColorName, setNewColorName] = useState('');
   const [newColorHex, setNewColorHex] = useState('#FFFFFF');
+
+  // Upload
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -145,6 +150,28 @@ export default function AdminPanel() {
     }
   };
 
+  const handleUploadStoreList = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    setUploadResult(null);
+    if (!uploadFile) {
+      setMessage('Please select a CSV or Excel file');
+      return;
+    }
+    setUploadLoading(true);
+    try {
+      const res = await api.uploadStoreList(uploadFile);
+      setUploadResult(res.data);
+      setUploadFile(null);
+      setMessage('');
+      loadData();
+    } catch (err) {
+      setMessage(err.response?.data?.detail || 'Upload failed');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
   const handleCreateColor = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -251,6 +278,38 @@ export default function AdminPanel() {
         </div>
       )}
 
+      {tab === TABS.UPLOAD && (
+        <div style={styles.section}>
+          <h3>Upload Store List</h3>
+          <p style={{ margin: '0 0 16px 0', color: '#4b5563', fontSize: 14 }}>
+            Upload CSV or Excel (.xlsx) with <b>Description</b> and <b>Opening Stock</b> columns.
+            Existing descriptions are updated; new ones are created.
+          </p>
+          <form onSubmit={handleUploadStoreList} style={styles.form}>
+            <input
+              type="file"
+              accept=".csv,.xlsx"
+              onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+              style={styles.fileInput}
+            />
+            <button type="submit" disabled={uploadLoading || !uploadFile} style={styles.btn}>
+              {uploadLoading ? 'Uploading...' : 'Upload & Update'}
+            </button>
+          </form>
+          {uploadResult && (
+            <div style={{ marginTop: 16, padding: 12, background: '#f0fdf4', borderRadius: 8 }}>
+              <p style={{ margin: 0, color: '#15803d', fontWeight: 600 }}>Done</p>
+              <p style={{ margin: '8px 0 0 0' }}>Updated: {uploadResult.updated} | Created: {uploadResult.created}</p>
+              {uploadResult.errors?.length > 0 && (
+                <ul style={{ margin: '8px 0 0 0', paddingLeft: 20, color: '#b45309', fontSize: 13 }}>
+                  {uploadResult.errors.map((err, i) => <li key={i}>{err}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {tab === TABS.COLORS && (
         <div style={styles.section}>
           <h3>Add Color</h3>
@@ -289,6 +348,7 @@ const styles = {
   table: { width: '100%', borderCollapse: 'collapse' },
   list: { listStyle: 'none', padding: 0, margin: 0 },
   listItem: { padding: '8px 0', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center' },
+  fileInput: { padding: 8, fontSize: 14 },
   message: { color: '#15803d', marginBottom: 12 },
   protected: { color: '#6b7280', fontStyle: 'italic' },
 };

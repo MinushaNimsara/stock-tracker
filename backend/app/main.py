@@ -7,6 +7,7 @@ from app.routers.colors import router as colors_router
 from app.routers.stock_entries import router as stock_router
 from app.routers.auth import router as auth_router
 from app.routers.users import router as users_router
+from app.routers.admin_upload import router as admin_upload_router
 
 app = FastAPI(title="A4 Format Stock Tracker API")
 
@@ -23,6 +24,7 @@ app.add_middleware(
 # Register routers (Bigger Applications style)
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(admin_upload_router)
 app.include_router(descriptions_router)
 app.include_router(colors_router)
 app.include_router(stock_router)

@@ -43,6 +43,22 @@ def get_description_by_name(db, name: str):
     return docs[0].to_dict()
 
 
+def get_description_by_name_ignore_case(db, name: str):
+    """Find description by name (exact first, then case-insensitive)."""
+    existing = get_description_by_name(db, name)
+    if existing:
+        return existing
+    name_lower = (name or "").strip().lower()
+    if not name_lower:
+        return None
+    docs = list(db.collection(COLL_DESCRIPTIONS).stream())
+    for d in docs:
+        data = d.to_dict()
+        if (data.get("name") or "").strip().lower() == name_lower:
+            return data
+    return None
+
+
 def create_description(name: str, opening_stock: int = 0, active: bool = True):
     db = get_firestore()
     existing = list(db.collection(COLL_DESCRIPTIONS).where("name", "==", name).limit(1).stream())

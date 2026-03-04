@@ -67,6 +67,12 @@ export const api = {
   getMonthlyReportByYearMonth: (year, month) =>
     apiClient.get(`/stock/monthly/${year}-${String(month).padStart(2, '0')}`),
 
+  uploadStoreList: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post('/admin/upload-store-list', formData);
+  },
+
   // Download Excel
   downloadMonthlyReportExcel: async (year, month) => {
     try {
