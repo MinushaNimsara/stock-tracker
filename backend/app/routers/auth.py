@@ -1,5 +1,6 @@
 """Login and token refresh."""
-from fastapi import APIRouter, Depends, HTTPException
+import os
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.auth import create_token, decode_token, verify_password, hash_password
@@ -14,19 +15,27 @@ MASTER_ADMIN_PASS = "RLA_store_8585"
 
 @router.post("/login")
 def login(form: OAuth2PasswordRequestForm = Depends()):
-    username = form.username
-    password = form.password
+    username = (form.username or "").strip()
+    password = (form.password or "").strip()
 
     try:
-        # First-time setup: if no users exist and credentials are master admin, create it
+        # First-time setup: if no users exist and credentials are master admin, create and log in
         existing_users = firestore_repo.list_users()
         if not existing_users and username == MASTER_ADMIN_USER and password == MASTER_ADMIN_PASS:
-            firestore_repo.create_user(
+            created = firestore_repo.create_user(
                 username=MASTER_ADMIN_USER,
                 password_hash=hash_password(MASTER_ADMIN_PASS),
                 role="admin",
                 active=True,
             )
+            if created:
+                token = create_token(sub=created["username"], role="admin")
+                return {
+                    "access_token": token,
+                    "token_type": "bearer",
+                    "username": created["username"],
+                    "role": "admin",
+                }
         user = firestore_repo.get_user_by_username(username)
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
@@ -56,6 +65,25 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
         "username": user["username"],
         "role": user.get("role", "user"),
     }
+
+
+@router.post("/reset-admin")
+def reset_admin(key: str = Query(..., alias="key")):
+    """Reset admin password to RLA_store_8585. Requires RESET_ADMIN_KEY in env."""
+    expected = os.getenv("RESET_ADMIN_KEY")
+    if not expected or key != expected:
+        raise HTTPException(status_code=403, detail="Invalid key")
+    user = firestore_repo.get_user_by_username("admin")
+    if not user:
+        firestore_repo.create_user(
+            username="admin",
+            password_hash=hash_password(MASTER_ADMIN_PASS),
+            role="admin",
+            active=True,
+        )
+        return {"message": "Admin user created"}
+    firestore_repo.update_user_password(user["id"], hash_password(MASTER_ADMIN_PASS))
+    return {"message": "Admin password reset to RLA_store_8585"}
 
 
 @router.get("/me")

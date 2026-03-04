@@ -58,3 +58,12 @@ Base64 avoids JSON escaping issues in Vercel.
 - Password: `RLA_store_8585`
 
 On first login, the master admin user is created automatically if no users exist.
+
+## Reset admin password (if login fails)
+
+If you get "Invalid username or password" and you're sure the password is correct:
+
+1. Add `RESET_ADMIN_KEY` in Vercel env (e.g. `my-secret-123`)
+2. Redeploy
+3. Call: `POST https://your-app.vercel.app/api/auth/reset-admin?key=my-secret-123`
+4. Try logging in again with admin / RLA_store_8585
