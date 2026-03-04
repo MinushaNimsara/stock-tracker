@@ -1,14 +1,18 @@
 # Set up Firebase on Vercel
 
-The app needs `FIREBASE_SERVICE_ACCOUNT_JSON` in Vercel so it can connect to Firestore.
+The app needs Firebase credentials in Vercel. Use **Option B (Base64)** if Option A causes issues.
 
 ## Verify setup
 
 After redeploying, visit: `https://your-app.vercel.app/api/health`  
-- If it returns `{"status":"ok","firestore":"connected"}` → Firebase is working.  
-- If it shows an error → the message will tell you what to fix.
+- `{"status":"ok","firestore":"connected"}` → working.  
+- Error message → tells you what to fix.
 
-## Step 1: Get your Firebase service account key
+---
+
+## Option A: FIREBASE_SERVICE_ACCOUNT_JSON
+
+### Step 1: Get your Firebase service account key
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Select your project (or create one)
@@ -17,25 +21,38 @@ After redeploying, visit: `https://your-app.vercel.app/api/health`
 5. Click **Generate new private key** → Confirm
 6. A JSON file will download (e.g. `your-project-firebase-adminsdk-xxxxx.json`)
 
-## Step 2: Add to Vercel
+### Step 2: Add to Vercel
 
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Open your project (e.g. **stock-tracker-phi-mocha**)
-3. Go to **Settings** → **Environment Variables**
-4. Add a new variable:
-   - **Name:** `FIREBASE_SERVICE_ACCOUNT_JSON` (exactly this, no typos)
-   - **Value:** Open the JSON file in a text editor, copy the **entire contents** (everything from `{` to `}`). Paste as **one single line** — remove any line breaks. Example format: `{"type":"service_account","project_id":"...","private_key_id":"...",...}`
-   - **Environment:** Production (and Preview if you use it)
-5. Click **Save**
+- **Name:** `FIREBASE_SERVICE_ACCOUNT_JSON`
+- **Value:** Copy the **entire** JSON file. Paste as **one line** (no line breaks).
+- **Environment:** Production
 
-## Step 3: Redeploy
+---
+
+## Option B: FIREBASE_SERVICE_ACCOUNT_B64 (recommended if A fails)
+
+Base64 avoids JSON escaping issues in Vercel.
+
+1. Download the Firebase JSON key (same as Step 1 above).
+2. Encode it to Base64:
+   - **Windows PowerShell:** `[Convert]::ToBase64String([IO.File]::ReadAllBytes("path\to\your-key.json"))`
+   - **Online:** Use a base64 encoder, paste the JSON, encode.
+3. In Vercel → **Settings** → **Environment Variables**:
+   - **Name:** `FIREBASE_SERVICE_ACCOUNT_B64`
+   - **Value:** The base64 string (one long line, no spaces)
+   - **Environment:** Production
+4. Save and redeploy.
+
+---
+
+## Redeploy
 
 1. Go to **Deployments**
 2. Click the **⋮** menu on the latest deployment
 3. Click **Redeploy**
 4. Wait 1–2 minutes for the build to finish
 
-## Step 4: Test login
+## Test login
 
 - Username: `admin`
 - Password: `RLA_store_8585`

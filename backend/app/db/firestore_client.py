@@ -1,10 +1,12 @@
 """
 Firebase Firestore client. No Supabase/PostgreSQL needed.
-Set FIREBASE_SERVICE_ACCOUNT_JSON (full JSON string) in Vercel env, or
-GOOGLE_APPLICATION_CREDENTIALS (path to JSON file) for local.
+Set in Vercel env:
+  - FIREBASE_SERVICE_ACCOUNT_JSON (full JSON string), OR
+  - FIREBASE_SERVICE_ACCOUNT_B64 (base64-encoded JSON - avoids escaping issues)
 """
 import os
 import json
+import base64
 
 _firestore_client = None
 
@@ -26,19 +28,26 @@ def get_firestore():
         return _firestore_client
 
     json_str = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
-    if not json_str or not json_str.strip():
+    b64_str = os.getenv("FIREBASE_SERVICE_ACCOUNT_B64")
+
+    if b64_str and b64_str.strip():
+        try:
+            json_str = base64.b64decode(b64_str).decode("utf-8")
+        except Exception as e:
+            raise RuntimeError(f"FIREBASE_SERVICE_ACCOUNT_B64 decode failed: {e}")
+    elif not json_str or not json_str.strip():
         raise RuntimeError(
-            "FIREBASE_SERVICE_ACCOUNT_JSON is not set. "
-            "Add it in Vercel: Settings → Environment Variables. "
-            "Value = full JSON from Firebase Console → Project settings → Service accounts → Generate key."
+            "Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_B64 in Vercel. "
+            "See VERCEL_FIREBASE_SETUP.md"
         )
+
     try:
         info = json.loads(json_str)
         cred = credentials.Certificate(info)
     except json.JSONDecodeError as e:
-        raise RuntimeError(f"FIREBASE_SERVICE_ACCOUNT_JSON is invalid JSON: {e}")
+        raise RuntimeError(f"Firebase JSON invalid: {e}")
     except Exception as e:
-        raise RuntimeError(f"Invalid FIREBASE_SERVICE_ACCOUNT_JSON: {e}")
+        raise RuntimeError(f"Firebase credentials error: {e}")
     firebase_admin.initialize_app(cred)
     _firestore_client = firestore.client()
     return _firestore_client
