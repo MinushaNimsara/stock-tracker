@@ -24,7 +24,15 @@ export default function Login() {
       await login(username, password);
       navigate('/', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed');
+      const detail = err.response?.data?.detail;
+      let msg = typeof detail === 'string' ? detail
+        : Array.isArray(detail) ? detail.map((d) => d?.msg || d).join(', ')
+        : err.response?.data?.message || err.message;
+      if (!msg) {
+        const status = err.response?.status;
+        msg = status ? `Login failed (HTTP ${status})` : 'Login failed. Check network.';
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }

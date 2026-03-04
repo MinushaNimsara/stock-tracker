@@ -17,17 +17,24 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
     username = form.username
     password = form.password
 
-    # First-time setup: if no users exist and credentials are master admin, create it
-    existing_users = firestore_repo.list_users()
-    if not existing_users and username == MASTER_ADMIN_USER and password == MASTER_ADMIN_PASS:
-        firestore_repo.create_user(
-            username=MASTER_ADMIN_USER,
-            password_hash=hash_password(MASTER_ADMIN_PASS),
-            role="admin",
-            active=True,
+    try:
+        # First-time setup: if no users exist and credentials are master admin, create it
+        existing_users = firestore_repo.list_users()
+        if not existing_users and username == MASTER_ADMIN_USER and password == MASTER_ADMIN_PASS:
+            firestore_repo.create_user(
+                username=MASTER_ADMIN_USER,
+                password_hash=hash_password(MASTER_ADMIN_PASS),
+                role="admin",
+                active=True,
+            )
+
+        user = firestore_repo.get_user_by_username(username)
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Database error. Ensure FIREBASE_SERVICE_ACCOUNT_JSON is set in Vercel. {str(e)}",
         )
 
-    user = firestore_repo.get_user_by_username(username)
     if not user or not user.get("active", True):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     if not verify_password(password, user.get("password_hash", "")):
