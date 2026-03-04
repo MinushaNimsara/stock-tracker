@@ -26,15 +26,19 @@ def get_firestore():
         return _firestore_client
 
     json_str = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
-    if json_str:
-        try:
-            info = json.loads(json_str)
-            cred = credentials.Certificate(info)
-        except Exception as e:
-            raise RuntimeError(f"Invalid FIREBASE_SERVICE_ACCOUNT_JSON: {e}")
-        firebase_admin.initialize_app(cred)
-    else:
-        # Local: use default credentials (GOOGLE_APPLICATION_CREDENTIALS file)
-        firebase_admin.initialize_app()
+    if not json_str or not json_str.strip():
+        raise RuntimeError(
+            "FIREBASE_SERVICE_ACCOUNT_JSON is not set. "
+            "Add it in Vercel: Settings → Environment Variables. "
+            "Value = full JSON from Firebase Console → Project settings → Service accounts → Generate key."
+        )
+    try:
+        info = json.loads(json_str)
+        cred = credentials.Certificate(info)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"FIREBASE_SERVICE_ACCOUNT_JSON is invalid JSON: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Invalid FIREBASE_SERVICE_ACCOUNT_JSON: {e}")
+    firebase_admin.initialize_app(cred)
     _firestore_client = firestore.client()
     return _firestore_client

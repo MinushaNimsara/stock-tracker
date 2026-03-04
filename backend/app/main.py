@@ -31,6 +31,24 @@ app.include_router(stock_router)
 def root():
     return {"message": "API is running"}
 
+
+@app.get("/health")
+def health():
+    """Check Firestore connection. Helps debug FIREBASE_SERVICE_ACCOUNT_JSON."""
+    try:
+        from app.db.firestore_client import get_firestore
+        db = get_firestore()
+        # Quick read to verify connection
+        list(db.collection("users").limit(1).stream())
+        return {"status": "ok", "firestore": "connected"}
+    except Exception as e:
+        return {
+            "status": "error",
+            "firestore": "failed",
+            "message": str(e),
+            "hint": "Set FIREBASE_SERVICE_ACCOUNT_JSON in Vercel → Settings → Environment Variables",
+        }
+
 @app.post("/seed-data")
 def seed_data():
     """

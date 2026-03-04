@@ -2,6 +2,12 @@
 
 The app needs `FIREBASE_SERVICE_ACCOUNT_JSON` in Vercel so it can connect to Firestore.
 
+## Verify setup
+
+After redeploying, visit: `https://your-app.vercel.app/api/health`  
+- If it returns `{"status":"ok","firestore":"connected"}` → Firebase is working.  
+- If it shows an error → the message will tell you what to fix.
+
 ## Step 1: Get your Firebase service account key
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
@@ -17,8 +23,8 @@ The app needs `FIREBASE_SERVICE_ACCOUNT_JSON` in Vercel so it can connect to Fir
 2. Open your project (e.g. **stock-tracker-phi-mocha**)
 3. Go to **Settings** → **Environment Variables**
 4. Add a new variable:
-   - **Name:** `FIREBASE_SERVICE_ACCOUNT_JSON`
-   - **Value:** Open the JSON file in a text editor, copy the **entire contents** (everything from `{` to `}`), and paste it as a single line. No extra spaces or line breaks.
+   - **Name:** `FIREBASE_SERVICE_ACCOUNT_JSON` (exactly this, no typos)
+   - **Value:** Open the JSON file in a text editor, copy the **entire contents** (everything from `{` to `}`). Paste as **one single line** — remove any line breaks. Example format: `{"type":"service_account","project_id":"...","private_key_id":"...",...}`
    - **Environment:** Production (and Preview if you use it)
 5. Click **Save**
 

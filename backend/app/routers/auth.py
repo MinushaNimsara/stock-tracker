@@ -27,13 +27,14 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
                 role="admin",
                 active=True,
             )
-
         user = firestore_repo.get_user_by_username(username)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Database error. Ensure FIREBASE_SERVICE_ACCOUNT_JSON is set in Vercel. {str(e)}",
-        )
+        err = str(e)
+        if "72 bytes" in err or "bcrypt" in err.lower():
+            raise HTTPException(status_code=400, detail="Password too long. Use 72 characters or less.")
+        raise HTTPException(status_code=503, detail=f"Database error: {err}")
 
     if not user or not user.get("active", True):
         raise HTTPException(status_code=401, detail="Invalid username or password")
