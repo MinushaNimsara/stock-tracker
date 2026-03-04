@@ -15,24 +15,29 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 MASTER_ADMIN_HASH = "$2b$12$m2L1VXDiXjcWB625aGhpZ.f91K1YzbmqVLAu//j2ExvRyXOJgBTLW"
 
 
+def _truncate_for_bcrypt(s: str) -> str:
+    """Bcrypt limit is 72 bytes. Truncate safely."""
+    b = s.encode("utf-8")
+    if len(b) <= 72:
+        return s
+    b = b[:72]
+    while b and (b[-1] & 0xC0) == 0x80:  # drop trailing partial UTF-8
+        b = b[:-1]
+    return b.decode("utf-8", errors="ignore") or s[:72]
+
+
 def hash_password(password: str) -> str:
-    # bcrypt limit is 72 bytes - truncate to avoid passlib error
-    b = password.encode("utf-8")
-    if len(b) > 72:
-        b = b[:72]
-        while b and (b[-1] & 0xC0) == 0x80:  # remove trailing partial UTF-8 char
-            b = b[:-1]
-        password = b.decode("utf-8", errors="replace")
-    return pwd_context.hash(password)
+    password = _truncate_for_bcrypt(password)
+    try:
+        return pwd_context.hash(password)
+    except ValueError as e:
+        if "72 bytes" in str(e):
+            return pwd_context.hash(password[:72])
+        raise
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    b = plain.encode("utf-8")
-    if len(b) > 72:
-        b = b[:72]
-        while b and (b[-1] & 0xC0) == 0x80:
-            b = b[:-1]
-        plain = b.decode("utf-8", errors="replace")
+    plain = _truncate_for_bcrypt(plain)
     return pwd_context.verify(plain, hashed)
 
 
