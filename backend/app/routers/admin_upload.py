@@ -1,8 +1,9 @@
 """
-Upload store list (CSV) to update descriptions and opening stock.
+Upload store list (CSV or Excel) to update descriptions and opening stock.
 """
 import csv
 import io
+from itertools import zip_longest
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
@@ -12,25 +13,43 @@ from app.db.firestore_client import get_firestore
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
-@router.post("/upload-store-list")
-async def upload_store_list(file: UploadFile = File(...)):
-    """Upload CSV with columns: Description, Opening Stock (or similar)."""
-
-    if not file.filename or not file.filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail="File must be a CSV")
-
-    content = file.file.read()
+def _parse_csv(content: bytes) -> list[dict]:
+    """Parse CSV bytes into list of row dicts with normalized headers."""
     try:
         text = content.decode("utf-8-sig")
     except UnicodeDecodeError:
         text = content.decode("latin-1")
-
     reader = csv.DictReader(io.StringIO(text))
     if not reader.fieldnames:
         raise HTTPException(status_code=400, detail="CSV has no headers")
+    return list(reader)
 
-    # Normalize header names (case-insensitive, strip)
-    headers_lower = {h.strip().lower(): h for h in reader.fieldnames}
+
+def _parse_excel(content: bytes) -> list[dict]:
+    """Parse Excel (.xlsx) bytes into list of row dicts."""
+    try:
+        import openpyxl
+    except ImportError:
+        raise HTTPException(status_code=503, detail="Excel support not installed (openpyxl)")
+    wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+    ws = wb.active
+    if not ws:
+        raise HTTPException(status_code=400, detail="Excel file has no sheet")
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        raise HTTPException(status_code=400, detail="Excel sheet is empty")
+    headers = [str(h).strip() if h is not None else "" for h in rows[0]]
+    return [
+        dict(zip_longest(headers, [str(c).strip() if c is not None else "" for c in row], fillvalue=""))
+        for row in rows[1:]
+    ]
+
+
+def _process_rows(rows: list[dict]) -> tuple[int, int, list[str]]:
+    """Process rows and return (updated, created, errors)."""
+    if not rows:
+        raise HTTPException(status_code=400, detail="No data rows")
+    headers_lower = {str(h).strip().lower(): h for h in rows[0].keys() if h}
 
     def col(name_variants):
         for v in name_variants:
@@ -44,12 +63,12 @@ async def upload_store_list(file: UploadFile = File(...)):
     if not desc_col:
         raise HTTPException(
             status_code=400,
-            detail="CSV must have a 'Description' (or 'Name', 'Item') column",
+            detail="File must have a 'Description' (or 'Name', 'Item') column",
         )
     if not stock_col:
         raise HTTPException(
             status_code=400,
-            detail="CSV must have an 'Opening Stock' (or 'Stock', 'Qty') column",
+            detail="File must have an 'Opening Stock' (or 'Stock', 'Qty') column",
         )
 
     db = get_firestore()
@@ -57,8 +76,8 @@ async def upload_store_list(file: UploadFile = File(...)):
     created = 0
     errors = []
 
-    for i, row in enumerate(reader, start=2):
-        name_raw = (row.get(desc_col) or "").strip()
+    for i, row in enumerate(rows, start=2):
+        name_raw = str(row.get(desc_col) or "").strip()
         if not name_raw:
             continue
 
@@ -77,6 +96,28 @@ async def upload_store_list(file: UploadFile = File(...)):
                 created += 1
             else:
                 errors.append(f"Row {i}: could not create '{name_raw}' (duplicate?)")
+
+    return updated, created, errors
+
+
+@router.post("/upload-store-list")
+async def upload_store_list(file: UploadFile = File(...)):
+    """Upload CSV or Excel (.xlsx) with columns: Description, Opening Stock (or similar)."""
+
+    fn = (file.filename or "").lower()
+    if not fn.endswith(".csv") and not fn.endswith(".xlsx"):
+        raise HTTPException(status_code=400, detail="File must be CSV or Excel (.xlsx)")
+
+    content = file.file.read()
+
+    # Detect by content: Excel files start with PK (ZIP magic bytes)
+    is_excel = content[:2] == b"PK" or fn.endswith(".xlsx")
+    if is_excel:
+        rows = _parse_excel(content)
+    else:
+        rows = _parse_csv(content)
+
+    updated, created, errors = _process_rows(rows)
 
     return {
         "message": "Store list processed",

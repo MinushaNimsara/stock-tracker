@@ -12,7 +12,7 @@ export default function AdminUpload() {
     setError('');
     setResult(null);
     if (!file) {
-      setError('Please select a CSV file');
+      setError('Please select a CSV or Excel file');
       return;
     }
     setLoading(true);
@@ -31,7 +31,7 @@ export default function AdminUpload() {
     <div style={styles.wrap}>
       <h2 style={styles.title}>Upload Store List</h2>
       <p style={styles.subtitle}>
-        Upload a CSV with <b>Description</b> and <b>Opening Stock</b> columns.
+        Upload a CSV or Excel (.xlsx) file with <b>Description</b> and <b>Opening Stock</b> columns.
         If a description exists, its opening stock is updated; otherwise a new one is created.
         Accepted column names: Description/Name/Item, Opening Stock/Stock/Qty.
       </p>
@@ -57,10 +57,10 @@ export default function AdminUpload() {
 
       <form onSubmit={handleSubmit} style={styles.form}>
         <div style={styles.field}>
-          <label style={styles.label}>CSV File</label>
+          <label style={styles.label}>CSV or Excel File</label>
           <input
             type="file"
-            accept=".csv"
+            accept=".csv,.xlsx"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             style={styles.fileInput}
           />
