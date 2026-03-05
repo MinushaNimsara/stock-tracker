@@ -134,8 +134,12 @@ export default function AdminPanel() {
     }
   };
 
-  const descNameExists = (name) =>
-    descriptions.some((d) => d.name.toLowerCase().trim() === (name || '').toLowerCase().trim());
+  const descNameAndPriceExists = (name, price) =>
+    descriptions.some(
+      (d) =>
+        d.name.toLowerCase().trim() === (name || '').toLowerCase().trim() &&
+        (Number(d.price) || 0) === (parseFloat(price) || 0)
+    );
 
   const filteredDescriptions = newDescName.trim()
     ? descriptions.filter((d) => d.name.toLowerCase().includes(newDescName.toLowerCase().trim()))
@@ -148,8 +152,8 @@ export default function AdminPanel() {
       setMessage('Description name required');
       return;
     }
-    if (descNameExists(newDescName)) {
-      setMessage('This description already exists');
+    if (descNameAndPriceExists(newDescName, newDescPrice)) {
+      setMessage('A description with this name and price already exists');
       return;
     }
     try {
@@ -258,7 +262,11 @@ export default function AdminPanel() {
     }
   };
 
-  const getDescName = (id) => descriptions.find((d) => d.id === id)?.name || `#${id}`;
+  const getDescLabel = (d) => `${d?.name ?? '?'} (${d?.price ?? 0})`;
+  const getDescName = (id) => {
+    const d = descriptions.find((x) => x.id === id);
+    return d ? getDescLabel(d) : `#${id}`;
+  };
   const getColorName = (id) => colors.find((c) => c.id === id)?.name || `#${id}`;
 
   const handleCreateColor = async (e) => {
@@ -383,7 +391,7 @@ export default function AdminPanel() {
             <input placeholder="Name" value={newDescName} onChange={(e) => setNewDescName(e.target.value)} style={styles.input} />
             <input type="number" placeholder="Price" value={newDescPrice} onChange={(e) => setNewDescPrice(e.target.value)} style={styles.input} />
             <input type="number" placeholder="Opening stock" value={newDescOpening} onChange={(e) => setNewDescOpening(e.target.value)} style={styles.input} />
-            <button type="submit" disabled={descNameExists(newDescName)} style={{ ...styles.btn, ...(descNameExists(newDescName) ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}>Add</button>
+            <button type="submit" disabled={descNameAndPriceExists(newDescName, newDescPrice)} style={{ ...styles.btn, ...(descNameAndPriceExists(newDescName, newDescPrice) ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}>Add</button>
           </form>
           <ul style={styles.list}>
             {filteredDescriptions.map((d) => (
@@ -447,7 +455,7 @@ export default function AdminPanel() {
                 <div style={{ ...styles.formRow, marginBottom: 0 }}>
                   <input type="date" value={editForm.entry_date} onChange={(e) => setEditForm((f) => ({ ...f, entry_date: e.target.value }))} style={styles.input} required />
                   <select value={editForm.description_id} onChange={(e) => setEditForm((f) => ({ ...f, description_id: Number(e.target.value) }))} style={styles.select} required>
-                    {descriptions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    {descriptions.map((d) => <option key={d.id} value={d.id}>{getDescLabel(d)}</option>)}
                   </select>
                   <select value={editForm.color_id} onChange={(e) => setEditForm((f) => ({ ...f, color_id: Number(e.target.value) }))} style={styles.select} required>
                     {colors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}

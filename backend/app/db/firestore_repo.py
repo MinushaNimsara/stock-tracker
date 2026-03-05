@@ -61,9 +61,12 @@ def get_description_by_name_ignore_case(db, name: str):
 
 def create_description(name: str, opening_stock: int = 0, price: float = 0, active: bool = True):
     db = get_firestore()
-    existing = list(db.collection(COLL_DESCRIPTIONS).where("name", "==", name).limit(1).stream())
-    if existing:
-        return None
+    # Allow same name with different price; block only when (name, price) both match
+    existing = list(db.collection(COLL_DESCRIPTIONS).where("name", "==", name.strip()).stream())
+    price_val = float(price)
+    for d in existing:
+        if float(d.to_dict().get("price") or 0) == price_val:
+            return None
     new_id = _next_id(db, COLL_DESCRIPTIONS)
     doc = {"id": new_id, "name": name.strip(), "opening_stock": opening_stock, "price": float(price), "active": active}
     db.collection(COLL_DESCRIPTIONS).add(doc)

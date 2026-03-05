@@ -24,7 +24,7 @@ def create_description(payload: DescriptionCreate, _: dict = Depends(get_current
         active=payload.active,
     )
     if created is None:
-        raise HTTPException(status_code=400, detail="Description already exists")
+        raise HTTPException(status_code=400, detail="Description with this name and price already exists")
     return DescriptionRead(**created)
 
 

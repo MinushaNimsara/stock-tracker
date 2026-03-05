@@ -31,6 +31,7 @@ export default function StoreEntry() {
   // New Description modal state
   const [newDescSearch, setNewDescSearch] = useState('');
   const [newDescOpeningStock, setNewDescOpeningStock] = useState('');
+  const [newDescPrice, setNewDescPrice] = useState('');
 
   useEffect(() => {
     loadDropdowns();
@@ -99,14 +100,16 @@ export default function StoreEntry() {
     closePurchaseModal();
   };
 
+  const formatDescLabel = (d) => `${d.name} (${d.price ?? 0})`;
   const filteredPurchaseDescs = descriptions.filter((d) =>
-    d.name.toLowerCase().includes(purchaseSearch.toLowerCase())
+    formatDescLabel(d).toLowerCase().includes(purchaseSearch.toLowerCase())
   );
 
   // ==================== NEW DESCRIPTION MODAL ====================
   const openNewDescModal = () => {
     setNewDescSearch('');
     setNewDescOpeningStock('');
+    setNewDescPrice('');
     setShowNewDescModal(true);
   };
 
@@ -120,11 +123,14 @@ export default function StoreEntry() {
       return;
     }
 
+    const priceVal = newDescPrice === '' ? 0 : parseFloat(newDescPrice) || 0;
     const duplicate = descriptions.find(
-      (d) => d.name.toLowerCase() === newDescSearch.toLowerCase()
+      (d) =>
+        d.name.toLowerCase().trim() === newDescSearch.toLowerCase().trim() &&
+        (Number(d.price) || 0) === priceVal
     );
     if (duplicate) {
-      alert(`Description "${duplicate.name}" already exists!`);
+      alert(`Description "${duplicate.name}" with price ${duplicate.price ?? 0} already exists!`);
       return;
     }
 
@@ -132,6 +138,7 @@ export default function StoreEntry() {
       const dataToSend = {
         name: newDescSearch.trim(),
         opening_stock: newDescOpeningStock === '' ? 0 : Number(newDescOpeningStock),
+        price: newDescPrice === '' ? 0 : parseFloat(newDescPrice) || 0,
         active: true,
       };
 
@@ -150,7 +157,7 @@ export default function StoreEntry() {
   };
 
   const filteredNewDescs = descriptions.filter((d) =>
-    d.name.toLowerCase().includes(newDescSearch.toLowerCase())
+    d.name.toLowerCase().includes(newDescSearch.toLowerCase().trim())
   );
   const isNewDescNotFound = newDescSearch.trim() && filteredNewDescs.length === 0;
 
@@ -268,23 +275,23 @@ export default function StoreEntry() {
               <div style={styles.descriptionDropdown}>
                 {descriptions
                   .filter((d) =>
-                    d.name.toLowerCase().includes(descriptionSearch.toLowerCase())
+                    formatDescLabel(d).toLowerCase().includes(descriptionSearch.toLowerCase())
                   )
                   .map((desc) => (
                     <div
                       key={desc.id}
                       onClick={() => {
                         setFormData((prev) => ({ ...prev, description_id: desc.id }));
-                        setDescriptionSearch(desc.name);
+                        setDescriptionSearch(formatDescLabel(desc));
                         setShowDescDropdown(false);
                       }}
                       style={styles.dropdownItem}
                     >
-                      {desc.name}
+                      {formatDescLabel(desc)}
                     </div>
                   ))}
                 {descriptions.filter((d) =>
-                  d.name.toLowerCase().includes(descriptionSearch.toLowerCase())
+                  formatDescLabel(d).toLowerCase().includes(descriptionSearch.toLowerCase())
                 ).length === 0 && <div style={styles.noResults}>No results found</div>}
               </div>
             )}
@@ -294,7 +301,10 @@ export default function StoreEntry() {
               <div style={styles.selectedDesc}>
                 ✅ Selected:{' '}
                 <strong>
-                  {descriptions.find((d) => d.id === formData.description_id)?.name}
+                  {(() => {
+                    const d = descriptions.find((x) => x.id === formData.description_id);
+                    return d ? formatDescLabel(d) : `#${formData.description_id}`;
+                  })()}
                 </strong>
                 <button
                   type="button"
@@ -419,7 +429,7 @@ export default function StoreEntry() {
                       onClick={() => handlePurchaseSelect(desc)}
                       style={styles.searchItem}
                     >
-                      {desc.name}
+                      {formatDescLabel(desc)}
                     </div>
                   ))
                 ) : (
@@ -486,7 +496,7 @@ export default function StoreEntry() {
               <div style={styles.searchResults}>
                 {filteredNewDescs.map((desc) => (
                   <div key={desc.id} style={styles.existingItem}>
-                    ✅ {desc.name} (Already exists)
+                    ✅ {formatDescLabel(desc)} (Already exists)
                   </div>
                 ))}
               </div>
@@ -499,6 +509,18 @@ export default function StoreEntry() {
                   ✨ Create new: <strong>{newDescSearch}</strong>
                 </div>
 
+                <div style={styles.field}>
+                  <label style={styles.label}>Price (Optional)</label>
+                  <input
+                    type="number"
+                    value={newDescPrice}
+                    onChange={(e) => setNewDescPrice(e.target.value)}
+                    min="0"
+                    step="0.01"
+                    placeholder="0"
+                    style={styles.input}
+                  />
+                </div>
                 <div style={styles.field}>
                   <label style={styles.label}>Opening Stock (Optional)</label>
                   <input
