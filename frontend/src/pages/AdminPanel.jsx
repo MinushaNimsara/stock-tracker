@@ -133,11 +133,22 @@ export default function AdminPanel() {
     }
   };
 
+  const descNameExists = (name) =>
+    descriptions.some((d) => d.name.toLowerCase().trim() === (name || '').toLowerCase().trim());
+
+  const filteredDescriptions = newDescName.trim()
+    ? descriptions.filter((d) => d.name.toLowerCase().includes(newDescName.toLowerCase().trim()))
+    : descriptions;
+
   const handleCreateDescription = async (e) => {
     e.preventDefault();
     setMessage('');
     if (!newDescName.trim()) {
       setMessage('Description name required');
+      return;
+    }
+    if (descNameExists(newDescName)) {
+      setMessage('This description already exists');
       return;
     }
     try {
@@ -364,13 +375,14 @@ export default function AdminPanel() {
       {tab === TABS.DESCRIPTIONS && (
         <div style={styles.section}>
           <h3 style={styles.subtitle}>Add Description</h3>
+          <p style={{ margin: '0 0 12px 0', color: '#6b7280', fontSize: 13 }}>Type to filter the list. Duplicate names cannot be added.</p>
           <form onSubmit={handleCreateDescription} style={styles.formRow}>
             <input placeholder="Name" value={newDescName} onChange={(e) => setNewDescName(e.target.value)} style={styles.input} />
             <input type="number" placeholder="Opening stock" value={newDescOpening} onChange={(e) => setNewDescOpening(e.target.value)} style={styles.input} />
-            <button type="submit" style={styles.btn}>Add</button>
+            <button type="submit" disabled={descNameExists(newDescName)} style={{ ...styles.btn, ...(descNameExists(newDescName) ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}>Add</button>
           </form>
           <ul style={styles.list}>
-            {descriptions.map((d) => (
+            {filteredDescriptions.map((d) => (
               <li key={d.id} style={styles.listItem}>
                 {d.name} (opening: {d.opening_stock})
                 <button onClick={() => handleDeleteDescription(d.id)} style={{ ...styles.smBtn, marginLeft: 8 }}>Delete</button>

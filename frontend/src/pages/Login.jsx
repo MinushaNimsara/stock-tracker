@@ -44,7 +44,6 @@ export default function Login() {
     <div style={styles.wrap}>
       <div style={styles.card}>
         <h1 style={styles.title}>Rich Light Apparels</h1>
-        <p style={styles.subtitle}>A4 Format Stock Management</p>
         <form onSubmit={handleSubmit} style={styles.form}>
           <input
             type="text"
@@ -92,7 +91,7 @@ const styles = {
     boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
     border: '1px solid #e5e7eb',
   },
-  title: { margin: '0 0 4px 0', color: '#1a237e', fontSize: '1.5rem' },
+  title: { margin: '0 0 28px 0', color: '#1a237e', fontSize: '1.5rem' },
   subtitle: { margin: '0 0 24px 0', color: '#6b7280', fontSize: 14 },
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
   input: {
