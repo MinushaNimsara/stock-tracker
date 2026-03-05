@@ -102,6 +102,7 @@ def _build_monthly_report(year_month: str) -> MonthlyReportResponse:
         row_data = {
             "sn": idx,
             "description": desc["name"],
+            "price": float(desc.get("price") or 0),
             "opening_stock": desc.get("opening_stock", 0),
             **{f"purchase_day_{i:02d}": 0 for i in range(1, 32)},
             **{f"usage_day_{i:02d}": 0 for i in range(1, 32)},

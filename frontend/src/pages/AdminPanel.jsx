@@ -21,6 +21,7 @@ export default function AdminPanel() {
   // Description form
   const [newDescName, setNewDescName] = useState('');
   const [newDescOpening, setNewDescOpening] = useState('');
+  const [newDescPrice, setNewDescPrice] = useState('');
 
   // Color form
   const [newColorName, setNewColorName] = useState('');
@@ -155,11 +156,13 @@ export default function AdminPanel() {
       await api.createDescription({
         name: newDescName.trim(),
         opening_stock: parseInt(newDescOpening, 10) || 0,
+        price: parseFloat(newDescPrice) || 0,
         active: true,
       });
       setMessage('Description added');
       setNewDescName('');
       setNewDescOpening('');
+      setNewDescPrice('');
       loadData();
     } catch (err) {
       setMessage(err.response?.data?.detail || 'Failed');
@@ -378,13 +381,14 @@ export default function AdminPanel() {
           <p style={{ margin: '0 0 12px 0', color: '#6b7280', fontSize: 13 }}>Type to filter the list. Duplicate names cannot be added.</p>
           <form onSubmit={handleCreateDescription} style={styles.formRow}>
             <input placeholder="Name" value={newDescName} onChange={(e) => setNewDescName(e.target.value)} style={styles.input} />
+            <input type="number" placeholder="Price" value={newDescPrice} onChange={(e) => setNewDescPrice(e.target.value)} style={styles.input} />
             <input type="number" placeholder="Opening stock" value={newDescOpening} onChange={(e) => setNewDescOpening(e.target.value)} style={styles.input} />
             <button type="submit" disabled={descNameExists(newDescName)} style={{ ...styles.btn, ...(descNameExists(newDescName) ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}>Add</button>
           </form>
           <ul style={styles.list}>
             {filteredDescriptions.map((d) => (
               <li key={d.id} style={styles.listItem}>
-                {d.name} (opening: {d.opening_stock})
+                {d.name} (price: {d.price ?? 0}, opening: {d.opening_stock})
                 <button onClick={() => handleDeleteDescription(d.id)} style={{ ...styles.smBtn, marginLeft: 8 }}>Delete</button>
               </li>
             ))}

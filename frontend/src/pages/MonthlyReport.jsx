@@ -91,6 +91,7 @@ export default function MonthlyReport() {
     const headers = [
       'S/N',
       'Description',
+      'Price',
       'Opening',
       ...Array.from({ length: 31 }, (_, i) => `P-${i + 1}`),
       ...Array.from({ length: 31 }, (_, i) => `U-${i + 1}`),
@@ -113,6 +114,7 @@ export default function MonthlyReport() {
       return [
         row.sn,
         `"${row.description}"`,
+        row.price ?? 0,
         row.opening_stock || 0,
         ...purchaseValues,
         ...usageValues,
@@ -129,6 +131,7 @@ export default function MonthlyReport() {
     const headers = [
       'S/N',
       'Description',
+      'Price',
       'Opening',
       ...Array.from({ length: 31 }, (_, i) => `P-${i + 1}`),
       'Total Purchase',
@@ -144,6 +147,7 @@ export default function MonthlyReport() {
       return [
         row.sn,
         `"${row.description}"`,
+        row.price ?? 0,
         row.opening_stock || 0,
         ...purchaseValues,
         row.total_purchase || 0,
@@ -158,6 +162,7 @@ export default function MonthlyReport() {
     const headers = [
       'S/N',
       'Description',
+      'Price',
       'Opening',
       ...Array.from({ length: 31 }, (_, i) => `U-${i + 1}`),
       'Total Usage',
@@ -173,6 +178,7 @@ export default function MonthlyReport() {
       return [
         row.sn,
         `"${row.description}"`,
+        row.price ?? 0,
         row.opening_stock || 0,
         ...usageValues,
         row.total_usage || 0,
@@ -204,6 +210,7 @@ export default function MonthlyReport() {
           <tr>
             <th style={{ ...styles.th, ...styles.thStickyCol1 }}>S/N</th>
             <th style={{ ...styles.th, ...styles.thStickyCol2 }}>Description</th>
+            <th style={styles.th}>Price</th>
             <th style={styles.th}>Opening</th>
             {[...Array(31)].map((_, i) => (
               <th key={`p-${i}`} style={styles.thPurchase}>P-{i + 1}</th>
@@ -228,6 +235,9 @@ export default function MonthlyReport() {
                 </td>
                 <td style={{ ...styles.td, ...styles.tdStickyCol2, backgroundColor: rowBgColor, fontWeight: '600' }}>
                   {row.description}
+                </td>
+                <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
+                  {row.price ?? 0}
                 </td>
                 <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
                   {row.opening_stock || 0}
@@ -274,6 +284,7 @@ export default function MonthlyReport() {
           <tr>
             <th style={{ ...styles.th, ...styles.thStickyCol1 }}>S/N</th>
             <th style={{ ...styles.th, ...styles.thStickyCol2 }}>Description</th>
+            <th style={styles.th}>Price</th>
             <th style={styles.th}>Opening</th>
             {[...Array(31)].map((_, i) => (
               <th key={`p-${i}`} style={styles.thPurchase}>P-{i + 1}</th>
@@ -294,6 +305,9 @@ export default function MonthlyReport() {
                 </td>
                 <td style={{ ...styles.td, ...styles.tdStickyCol2, backgroundColor: rowBgColor, fontWeight: '600' }}>
                   {row.description}
+                </td>
+                <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
+                  {row.price ?? 0}
                 </td>
                 <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
                   {row.opening_stock || 0}
@@ -330,6 +344,7 @@ export default function MonthlyReport() {
           <tr>
             <th style={{ ...styles.th, ...styles.thStickyCol1 }}>S/N</th>
             <th style={{ ...styles.th, ...styles.thStickyCol2 }}>Description</th>
+            <th style={styles.th}>Price</th>
             <th style={styles.th}>Opening</th>
             {[...Array(31)].map((_, i) => (
               <th key={`u-${i}`} style={styles.thUsage}>U-{i + 1}</th>
@@ -349,6 +364,9 @@ export default function MonthlyReport() {
                 </td>
                 <td style={{ ...styles.td, ...styles.tdStickyCol2, backgroundColor: rowBgColor, fontWeight: '600' }}>
                   {row.description}
+                </td>
+                <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
+                  {row.price ?? 0}
                 </td>
                 <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
                   {row.opening_stock || 0}

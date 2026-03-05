@@ -24,7 +24,7 @@ def _next_id(db, collection_name: str) -> int:
 def list_descriptions():
     db = get_firestore()
     docs = db.collection(COLL_DESCRIPTIONS).order_by("id").stream()
-    return [{"id": d.to_dict()["id"], "name": d.to_dict()["name"], "opening_stock": d.to_dict().get("opening_stock", 0), "active": d.to_dict().get("active", True)} for d in docs]
+    return [{"id": d.to_dict()["id"], "name": d.to_dict()["name"], "opening_stock": d.to_dict().get("opening_stock", 0), "price": float(d.to_dict().get("price") or 0), "active": d.to_dict().get("active", True)} for d in docs]
 
 
 def get_description_by_id(db, description_id: int):
@@ -59,13 +59,13 @@ def get_description_by_name_ignore_case(db, name: str):
     return None
 
 
-def create_description(name: str, opening_stock: int = 0, active: bool = True):
+def create_description(name: str, opening_stock: int = 0, price: float = 0, active: bool = True):
     db = get_firestore()
     existing = list(db.collection(COLL_DESCRIPTIONS).where("name", "==", name).limit(1).stream())
     if existing:
         return None
     new_id = _next_id(db, COLL_DESCRIPTIONS)
-    doc = {"id": new_id, "name": name.strip(), "opening_stock": opening_stock, "active": active}
+    doc = {"id": new_id, "name": name.strip(), "opening_stock": opening_stock, "price": float(price), "active": active}
     db.collection(COLL_DESCRIPTIONS).add(doc)
     return doc
 
@@ -88,7 +88,7 @@ def update_description_opening_stock(description_id: int, opening_stock: int):
     return True
 
 
-def update_description(db, description_id: int, name: str | None = None, opening_stock: int | None = None):
+def update_description(db, description_id: int, name: str | None = None, opening_stock: int | None = None, price: float | None = None):
     """Update description by id. None values are not updated."""
     docs = list(db.collection(COLL_DESCRIPTIONS).where("id", "==", description_id).limit(1).stream())
     if not docs:
@@ -98,6 +98,8 @@ def update_description(db, description_id: int, name: str | None = None, opening
         updates["name"] = name.strip()
     if opening_stock is not None:
         updates["opening_stock"] = int(opening_stock)
+    if price is not None:
+        updates["price"] = float(price)
     if updates:
         docs[0].reference.update(updates)
     return True

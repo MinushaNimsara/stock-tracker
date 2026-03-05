@@ -38,6 +38,7 @@ class MonthlyReportRow(BaseModel):
     
     sn: int | None
     description: str
+    price: float = 0
     opening_stock: int
     
     # Purchase columns (daily)

@@ -20,6 +20,7 @@ def create_description(payload: DescriptionCreate, _: dict = Depends(get_current
     created = firestore_repo.create_description(
         payload.name.strip(),
         opening_stock=payload.opening_stock,
+        price=payload.price,
         active=payload.active,
     )
     if created is None:
