@@ -38,12 +38,20 @@ if backend_app is not None:
 else:
     err_msg = str(_backend_err) if _backend_err else "Unknown error"
 
-    @app.get("/api")
-    @app.get("/api/")
-    def _fail():
+    def _fail_response():
         return {
             "error": "Backend failed to start",
-            "hint": "Check Vercel Function logs. Add FIREBASE_SERVICE_ACCOUNT_JSON and ensure api/requirements.txt deps are installed.",
+            "hint": "Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_B64 in Vercel → Settings → Environment Variables. See VERCEL_FIREBASE_SETUP.md",
             "detail": err_msg,
-            "traceback": _load_error,
         }
+
+    @app.get("/api")
+    @app.get("/api/")
+    def _fail_root():
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=503, content=_fail_response())
+
+    @app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+    def _fail_any(path: str):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=503, content=_fail_response())
