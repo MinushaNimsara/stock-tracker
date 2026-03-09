@@ -114,6 +114,18 @@ class MonthlyReportRow(BaseModel):
     closing_stock_usage: int  # opening - total_usage (Usage tab)
 
 
+class DeptEntryItem(BaseModel):
+    description_id: int
+    department: str
+    in_qty: int = 0
+    out_qty: int = 0
+
+
+class DeptGridSave(BaseModel):
+    entry_date: date
+    entries: list[DeptEntryItem]
+
+
 class MonthlyReportResponse(BaseModel):
     year_month: str
     colors: list[dict]

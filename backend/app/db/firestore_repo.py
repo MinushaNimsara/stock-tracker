@@ -8,6 +8,7 @@ from app.db.firestore_client import get_firestore
 COLL_DESCRIPTIONS = "descriptions"
 COLL_COLORS = "a4_colors"
 COLL_STOCK = "stock_entries"
+COLL_DEPT_ENTRIES = "dept_stock_entries"
 COLL_USERS = "users"
 
 
@@ -211,6 +212,64 @@ def get_all_descriptions_ordered(db):
 def get_all_colors_ordered(db):
     docs = db.collection(COLL_COLORS).order_by("id").stream()
     return [d.to_dict() for d in docs]
+
+
+# --- Dept stock entries (Excel-style IN/OUT by department) ---
+def get_dept_entries_for_month(db, year: int, month: int):
+    """Returns all dept entries for the month. Each: {entry_date, description_id, department, in_qty, out_qty}"""
+    start = f"{year}-{month:02d}-01"
+    end = f"{year}-{month:02d}-31"
+    docs = (
+        db.collection(COLL_DEPT_ENTRIES)
+        .where("entry_date", ">=", start)
+        .where("entry_date", "<=", end)
+        .stream()
+    )
+    return [d.to_dict() for d in docs]
+
+
+def get_dept_entries_for_date(db, entry_date: str):
+    """Returns list of {description_id, department, in_qty, out_qty} for the given date."""
+    docs = (
+        db.collection(COLL_DEPT_ENTRIES)
+        .where("entry_date", "==", entry_date)
+        .stream()
+    )
+    return [d.to_dict() for d in docs]
+
+
+def save_dept_entries(db, entry_date: str, entries: list[dict]):
+    """Save or update department entries for a date. entries: [{description_id, department, in_qty, out_qty}, ...]"""
+    col = db.collection(COLL_DEPT_ENTRIES)
+    existing_docs = list(col.where("entry_date", "==", entry_date).stream())
+    existing_map = {}
+    for d in existing_docs:
+        data = d.to_dict()
+        key = (data.get("description_id"), data.get("department"))
+        existing_map[key] = d.reference
+
+    for item in entries:
+        desc_id = int(item["description_id"])
+        dept = str(item["department"])
+        in_q = int(item.get("in_qty") or 0)
+        out_q = int(item.get("out_qty") or 0)
+        key = (desc_id, dept)
+        if in_q == 0 and out_q == 0:
+            if key in existing_map:
+                existing_map[key].delete()
+                del existing_map[key]
+            continue
+        doc = {
+            "entry_date": entry_date,
+            "description_id": desc_id,
+            "department": dept,
+            "in_qty": in_q,
+            "out_qty": out_q,
+        }
+        if key in existing_map:
+            existing_map[key].update(doc)
+        else:
+            col.add(doc)
 
 
 # --- Users ---

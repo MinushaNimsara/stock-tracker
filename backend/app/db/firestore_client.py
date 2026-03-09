@@ -1,12 +1,14 @@
 """
 Firebase Firestore client. No Supabase/PostgreSQL needed.
-Set in Vercel env:
-  - FIREBASE_SERVICE_ACCOUNT_JSON (full JSON string), OR
+Set one of:
+  - FIREBASE_SERVICE_ACCOUNT_PATH (path to .json file) - easiest for local dev
+  - FIREBASE_SERVICE_ACCOUNT_JSON (full JSON string)
   - FIREBASE_SERVICE_ACCOUNT_B64 (base64-encoded JSON - avoids escaping issues)
 """
 import os
 import json
 import base64
+from pathlib import Path
 
 _firestore_client = None
 
@@ -27,18 +29,33 @@ def get_firestore():
         _firestore_client = firestore.client()
         return _firestore_client
 
-    json_str = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
-    b64_str = os.getenv("FIREBASE_SERVICE_ACCOUNT_B64")
+    json_str = None
+    path_str = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
+    if path_str and path_str.strip():
+        p = Path(path_str)
+        if not p.is_absolute():
+            _base = Path(__file__).resolve().parent.parent  # backend/
+            p = (_base / path_str).resolve()
+        if p.exists():
+            json_str = p.read_text(encoding="utf-8")
+        else:
+            raise RuntimeError(f"FIREBASE_SERVICE_ACCOUNT_PATH file not found: {p}")
 
-    if b64_str and b64_str.strip():
-        try:
-            json_str = base64.b64decode(b64_str).decode("utf-8")
-        except Exception as e:
-            raise RuntimeError(f"FIREBASE_SERVICE_ACCOUNT_B64 decode failed: {e}")
-    elif not json_str or not json_str.strip():
+    if not json_str:
+        b64_str = os.getenv("FIREBASE_SERVICE_ACCOUNT_B64")
+        if b64_str and b64_str.strip():
+            try:
+                json_str = base64.b64decode(b64_str).decode("utf-8")
+            except Exception as e:
+                raise RuntimeError(f"FIREBASE_SERVICE_ACCOUNT_B64 decode failed: {e}")
+        else:
+            json_str = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+
+    if not json_str or not json_str.strip():
         raise RuntimeError(
-            "Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_B64 in Vercel. "
-            "See VERCEL_FIREBASE_SETUP.md"
+            "Firebase credentials missing. "
+            "Local dev: set FIREBASE_SERVICE_ACCOUNT_PATH=path/to/your-key.json in backend/.env, "
+            "or use FIREBASE_SERVICE_ACCOUNT_B64. See VERCEL_FIREBASE_SETUP.md"
         )
 
     try:

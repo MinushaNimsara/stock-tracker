@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.auth_deps import get_current_user_payload, require_admin
 from app.db import firestore_repo
 from app.db.firestore_client import get_firestore
-from app.schemas.usage_entry import StockEntryCreate, StockEntryRead, StockEntryUpdate, MonthlyReportResponse, MonthlyReportRow
+from app.schemas.usage_entry import StockEntryCreate, StockEntryRead, StockEntryUpdate, MonthlyReportResponse, MonthlyReportRow, DeptGridSave
 
 router = APIRouter(prefix="/stock", tags=["stock"])
 
@@ -75,6 +75,40 @@ def update_stock_entry(entry_id: int, payload: StockEntryUpdate, _: dict = Depen
     return StockEntryRead(**entry)
 
 
+@router.get("/dept-grid/{entry_date}")
+def get_dept_grid(entry_date: str, _: dict = Depends(get_current_user_payload)):
+    """Get department IN/OUT grid data for a date. Returns descriptions + their dept entries."""
+    db = get_firestore()
+    descriptions = firestore_repo.get_all_descriptions_ordered(db)
+    dept_entries = firestore_repo.get_dept_entries_for_date(db, entry_date)
+    by_desc = {}
+    for e in dept_entries:
+        did = e["description_id"]
+        if did not in by_desc:
+            by_desc[did] = {}
+        by_desc[did][e["department"]] = {"in_qty": e.get("in_qty", 0), "out_qty": e.get("out_qty", 0)}
+    rows = []
+    for d in descriptions:
+        deps = by_desc.get(d["id"], {})
+        rows.append({
+            "description_id": d["id"],
+            "description": d["name"],
+            "price": float(d.get("price") or 0),
+            "opening_stock": d.get("opening_stock", 0),
+            "departments": deps,
+        })
+    return {"entry_date": entry_date, "rows": rows}
+
+
+@router.post("/dept-grid")
+def save_dept_grid(payload: DeptGridSave, _: dict = Depends(get_current_user_payload)):
+    """Save department IN/OUT grid for a date."""
+    db = get_firestore()
+    entries = [e.model_dump() for e in payload.entries]
+    firestore_repo.save_dept_entries(db, payload.entry_date.isoformat(), entries)
+    return {"message": "Saved"}
+
+
 @router.delete("/entries/{entry_id}", status_code=204)
 def delete_stock_entry(entry_id: int, _: dict = Depends(require_admin)):
     db = get_firestore()
@@ -114,19 +148,34 @@ def _build_monthly_report(year_month: str) -> MonthlyReportResponse:
         }
 
         entries = firestore_repo.get_stock_entries_for_month(db, desc["id"], year, month)
+        dept_entries = firestore_repo.get_dept_entries_for_month(db, year, month)
+        dept_by_desc_day = {}
+        for e in dept_entries:
+            if e["description_id"] == desc["id"]:
+                day = int(e["entry_date"].split("-")[2])
+                if day not in dept_by_desc_day:
+                    dept_by_desc_day[day] = {"in": 0, "out": 0}
+                dept_by_desc_day[day]["in"] += e.get("in_qty", 0)
+                dept_by_desc_day[day]["out"] += e.get("out_qty", 0)
         total_purchase = 0
         total_usage = 0
 
-        for entry in entries:
-            day = int(entry["entry_date"].split("-")[2])
+        for day in range(1, 32):
             purchase_key = f"purchase_day_{day:02d}"
             usage_key = f"usage_day_{day:02d}"
-            if purchase_key in row_data:
-                row_data[purchase_key] += entry.get("purchase_qty", 0)
-            if usage_key in row_data:
-                row_data[usage_key] += entry.get("usage_qty", 0)
-            total_purchase += entry.get("purchase_qty", 0)
-            total_usage += entry.get("usage_qty", 0)
+            if day in dept_by_desc_day:
+                row_data[purchase_key] = dept_by_desc_day[day]["in"]
+                row_data[usage_key] = dept_by_desc_day[day]["out"]
+                total_purchase += dept_by_desc_day[day]["in"]
+                total_usage += dept_by_desc_day[day]["out"]
+            else:
+                for entry in entries:
+                    if int(entry["entry_date"].split("-")[2]) == day:
+                        row_data[purchase_key] += entry.get("purchase_qty", 0)
+                        row_data[usage_key] += entry.get("usage_qty", 0)
+                        total_purchase += entry.get("purchase_qty", 0)
+                        total_usage += entry.get("usage_qty", 0)
+                        break
 
         row_data["total_purchase"] = total_purchase
         row_data["total_usage"] = total_usage

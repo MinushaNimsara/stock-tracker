@@ -1,3 +1,16 @@
+from pathlib import Path
+import os
+
+from dotenv import load_dotenv
+
+# Load .env / .env.local for local dev (Firebase credentials)
+# Try: project root (.env.local), project root (.env), backend folder, cwd
+_backend_dir = Path(__file__).resolve().parent.parent  # backend/
+_project_root = _backend_dir.parent  # a4-format-stock-tracker/
+for p in [_project_root / ".env.local", _project_root / ".env", _backend_dir / ".env", Path.cwd() / ".env"]:
+    if p.exists():
+        load_dotenv(p)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,6 +21,7 @@ from app.routers.stock_entries import router as stock_router
 from app.routers.auth import router as auth_router
 from app.routers.users import router as users_router
 from app.routers.admin_upload import router as admin_upload_router
+from app.routers.departments import router as departments_router
 
 app = FastAPI(title="A4 Format Stock Tracker API")
 
@@ -27,6 +41,7 @@ app.include_router(users_router)
 app.include_router(admin_upload_router)
 app.include_router(descriptions_router)
 app.include_router(colors_router)
+app.include_router(departments_router)
 app.include_router(stock_router)
 
 @app.get("/")

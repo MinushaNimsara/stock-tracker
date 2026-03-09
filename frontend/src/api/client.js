@@ -70,6 +70,9 @@ export const api = {
   updateStockEntry: (id, data) => apiClient.patch(`/stock/entries/${id}`, data),
   deleteStockEntry: (id) => apiClient.delete(`/stock/entries/${id}`),
   getMonthlyReport: (yearMonth) => apiClient.get(`/stock/monthly/${yearMonth}`),
+  getDepartments: () => apiClient.get('/departments'),
+  getDeptGrid: (date) => apiClient.get(`/stock/dept-grid/${date}`),
+  saveDeptGrid: (data) => apiClient.post('/stock/dept-grid', data),
 
   // For Excel-style report
   getMonthlyReportByYearMonth: (year, month) =>
