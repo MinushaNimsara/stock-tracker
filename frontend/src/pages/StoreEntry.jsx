@@ -185,8 +185,8 @@ export default function StoreEntry() {
             <tbody>
               {filteredRows.map((row) => (
                 <tr key={row.description_id}>
-                  <td style={styles.tdDetail}>{row.description}</td>
-                  <td style={styles.td}>{row.size ?? ''}</td>
+                  <td style={styles.tdDetail}>{row.description ?? '-'}</td>
+                  <td style={styles.td}>{row.size ?? '-'}</td>
                   <td style={styles.td}>{row.price ?? 0}</td>
                   <td style={styles.td}>{row.opening_stock ?? 0}</td>
                   {IN_DEPTS.map((dept) => (
@@ -194,6 +194,7 @@ export default function StoreEntry() {
                       <input
                         type="number"
                         min="0"
+                        placeholder="0"
                         value={getCell(row, dept, 'in') || ''}
                         onChange={(e) => setCell(row.description_id, dept, 'in', e.target.value)}
                         style={styles.input}
@@ -205,6 +206,7 @@ export default function StoreEntry() {
                       <input
                         type="number"
                         min="0"
+                        placeholder="0"
                         value={getCell(row, dept, 'out') || ''}
                         onChange={(e) => setCell(row.description_id, dept, 'out', e.target.value)}
                         style={styles.input}
@@ -396,7 +398,7 @@ const styles = {
   errorMsg: { padding: 12, backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: 8, marginBottom: 16 },
   loading: { padding: 40, textAlign: 'center' },
   tableWrap: { overflowX: 'auto', backgroundColor: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
-  table: { width: '100%', borderCollapse: 'collapse', minWidth: 1200 },
+  table: { width: '100%', borderCollapse: 'collapse', minWidth: 1200, border: '1px solid #94a3b8' },
   th: {
     padding: 10,
     backgroundColor: '#334155',
@@ -419,24 +421,32 @@ const styles = {
   thIn: { padding: 10, color: '#fff', border: '1px solid #475569', fontSize: 12, textAlign: 'center', backgroundColor: '#2563eb' },
   thOut: { padding: 10, color: '#fff', border: '1px solid #475569', fontSize: 12, textAlign: 'center', backgroundColor: '#dc2626' },
   td: {
-    padding: 4,
-    border: '1px solid #e2e8f0',
+    padding: 6,
+    border: '1px solid #94a3b8',
+    color: '#1e293b',
+    fontSize: 14,
   },
   tdDetail: {
     padding: 8,
-    border: '1px solid #e2e8f0',
+    border: '1px solid #94a3b8',
     fontWeight: 600,
     position: 'sticky',
     left: 0,
     backgroundColor: '#fff',
     zIndex: 2,
+    color: '#1e293b',
+    fontSize: 14,
   },
   input: {
     width: 56,
-    padding: 4,
+    minWidth: 48,
+    padding: 6,
     textAlign: 'center',
-    border: '1px solid #cbd5e1',
+    border: '1px solid #64748b',
     borderRadius: 4,
+    fontSize: 14,
+    color: '#1e293b',
+    backgroundColor: '#fff',
   },
   empty: { padding: 24, textAlign: 'center', color: '#64748b' },
 };
