@@ -10,6 +10,8 @@ export default function StoreEntry() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [showNewDescModal, setShowNewDescModal] = useState(false);
+  const [newDesc, setNewDesc] = useState({ name: '', size: '', price: '', openingStock: '' });
 
   const loadGrid = async () => {
     setLoading(true);
@@ -51,6 +53,39 @@ export default function StoreEntry() {
         return { ...r, departments: deps };
       })
     );
+  };
+
+  const handleAddNewDescription = async (e) => {
+    e.preventDefault();
+    if (!newDesc.name.trim()) {
+      setMessage('Please enter Description (Details)');
+      return;
+    }
+    const priceVal = newDesc.price === '' ? 0 : parseFloat(newDesc.price) || 0;
+    const duplicate = rows.find(
+      (r) =>
+        r.description.toLowerCase().trim() === newDesc.name.toLowerCase().trim() &&
+        (Number(r.price) || 0) === priceVal
+    );
+    if (duplicate) {
+      setMessage(`Item "${duplicate.description}" with same price already exists`);
+      return;
+    }
+    try {
+      await api.createDescription({
+        name: newDesc.name.trim(),
+        size: (newDesc.size || '').trim(),
+        price: priceVal,
+        opening_stock: newDesc.openingStock === '' ? 0 : parseInt(newDesc.openingStock, 10) || 0,
+        active: true,
+      });
+      setMessage('Item added successfully');
+      setNewDesc({ name: '', size: '', price: '', openingStock: '' });
+      setShowNewDescModal(false);
+      loadGrid();
+    } catch (err) {
+      setMessage('Error: ' + (err.response?.data?.detail || err.message));
+    }
   };
 
   const handleSave = async () => {
@@ -97,6 +132,9 @@ export default function StoreEntry() {
         </label>
         <button onClick={handleSave} disabled={saving || loading} style={styles.saveBtn}>
           {saving ? 'Saving...' : 'Save'}
+        </button>
+        <button type="button" onClick={() => setShowNewDescModal(true)} style={styles.newDescBtn}>
+          ➕ New Description
         </button>
       </div>
 
@@ -160,7 +198,65 @@ export default function StoreEntry() {
       )}
 
       {!loading && rows.length === 0 && (
-        <p style={styles.empty}>No descriptions. Add items in Admin → Descriptions.</p>
+        <p style={styles.empty}>No items yet. Click "➕ New Description" to add.</p>
+      )}
+
+      {showNewDescModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowNewDescModal(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <h2 style={styles.modalTitle}>➕ Add New Item</h2>
+            <form onSubmit={handleAddNewDescription} style={styles.modalForm}>
+              <div style={styles.field}>
+                <label style={styles.fieldLabel}>Description (Details) *</label>
+                <input
+                  value={newDesc.name}
+                  onChange={(e) => setNewDesc((p) => ({ ...p, name: e.target.value }))}
+                  placeholder="e.g. A4 PAPERS"
+                  style={styles.modalInput}
+                  required
+                />
+              </div>
+              <div style={styles.field}>
+                <label style={styles.fieldLabel}>Size</label>
+                <input
+                  value={newDesc.size}
+                  onChange={(e) => setNewDesc((p) => ({ ...p, size: e.target.value }))}
+                  placeholder="e.g. A4, WPCL"
+                  style={styles.modalInput}
+                />
+              </div>
+              <div style={styles.field}>
+                <label style={styles.fieldLabel}>Price</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newDesc.price}
+                  onChange={(e) => setNewDesc((p) => ({ ...p, price: e.target.value }))}
+                  placeholder="0"
+                  style={styles.modalInput}
+                />
+              </div>
+              <div style={styles.field}>
+                <label style={styles.fieldLabel}>Opening Stock</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={newDesc.openingStock}
+                  onChange={(e) => setNewDesc((p) => ({ ...p, openingStock: e.target.value }))}
+                  placeholder="0"
+                  style={styles.modalInput}
+                />
+              </div>
+              <div style={styles.modalButtons}>
+                <button type="button" onClick={() => setShowNewDescModal(false)} style={styles.cancelBtn}>
+                  Cancel
+                </button>
+                <button type="submit" style={styles.addBtn}>Add</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -194,6 +290,65 @@ const styles = {
     borderRadius: 8,
     fontWeight: 600,
     cursor: 'pointer',
+  },
+  newDescBtn: {
+    padding: '10px 24px',
+    backgroundColor: '#8b5cf6',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 8,
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    minWidth: 340,
+    boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+  },
+  modalTitle: { margin: '0 0 20px', fontSize: '1.25rem' },
+  modalForm: { display: 'flex', flexDirection: 'column', gap: 16 },
+  field: { display: 'flex', flexDirection: 'column', gap: 4 },
+  fieldLabel: { fontSize: 14, fontWeight: 600 },
+  modalInput: {
+    padding: 10,
+    border: '2px solid #e2e8f0',
+    borderRadius: 8,
+    fontSize: 14,
+  },
+  modalButtons: { display: 'flex', gap: 12, marginTop: 8 },
+  cancelBtn: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: '#64748b',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontWeight: 600,
+  },
+  addBtn: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: '#2563eb',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 8,
+    cursor: 'pointer',
+    fontWeight: 600,
   },
   successMsg: { padding: 12, backgroundColor: '#d1fae5', color: '#065f46', borderRadius: 8, marginBottom: 16 },
   errorMsg: { padding: 12, backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: 8, marginBottom: 16 },
