@@ -12,6 +12,15 @@ export default function StoreEntry() {
   const [message, setMessage] = useState('');
   const [showNewDescModal, setShowNewDescModal] = useState(false);
   const [newDesc, setNewDesc] = useState({ name: '', size: '', price: '', openingStock: '' });
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredRows = searchTerm.trim()
+    ? rows.filter(
+        (r) =>
+          (r.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (r.size || '').toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : rows;
 
   const loadGrid = async () => {
     setLoading(true);
@@ -130,6 +139,18 @@ export default function StoreEntry() {
             style={styles.dateInput}
           />
         </label>
+        <div style={styles.searchBox}>
+          <input
+            type="text"
+            placeholder="🔍 Search description..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={styles.searchInput}
+          />
+          {searchTerm && (
+            <button type="button" onClick={() => setSearchTerm('')} style={styles.clearSearchBtn} title="Clear">✕</button>
+          )}
+        </div>
         <button onClick={handleSave} disabled={saving || loading} style={styles.saveBtn}>
           {saving ? 'Saving...' : 'Save'}
         </button>
@@ -162,7 +183,7 @@ export default function StoreEntry() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
+              {filteredRows.map((row) => (
                 <tr key={row.description_id}>
                   <td style={styles.tdDetail}>{row.description}</td>
                   <td style={styles.td}>{row.size ?? ''}</td>
@@ -199,6 +220,9 @@ export default function StoreEntry() {
 
       {!loading && rows.length === 0 && (
         <p style={styles.empty}>No items yet. Click "➕ New Description" to add.</p>
+      )}
+      {!loading && rows.length > 0 && filteredRows.length === 0 && (
+        <p style={styles.empty}>No items match your search. Try a different term.</p>
       )}
 
       {showNewDescModal && (
@@ -290,6 +314,24 @@ const styles = {
     borderRadius: 8,
     fontWeight: 600,
     cursor: 'pointer',
+  },
+  searchBox: { position: 'relative', display: 'flex', alignItems: 'center' },
+  searchInput: {
+    padding: '10px 36px 10px 14px',
+    border: '2px solid #e2e8f0',
+    borderRadius: 8,
+    fontSize: 14,
+    width: 220,
+  },
+  clearSearchBtn: {
+    position: 'absolute',
+    right: 10,
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 16,
+    color: '#64748b',
+    padding: 4,
   },
   newDescBtn: {
     padding: '10px 24px',
