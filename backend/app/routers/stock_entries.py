@@ -93,6 +93,7 @@ def get_dept_grid(entry_date: str, _: dict = Depends(get_current_user_payload)):
         rows.append({
             "description_id": d["id"],
             "description": d["name"],
+            "size": (d.get("size") or ""),
             "price": float(d.get("price") or 0),
             "opening_stock": d.get("opening_stock", 0),
             "departments": deps,
@@ -136,6 +137,7 @@ def _build_monthly_report(year_month: str) -> MonthlyReportResponse:
         row_data = {
             "sn": idx,
             "description": desc["name"],
+            "size": (desc.get("size") or ""),
             "price": float(desc.get("price") or 0),
             "opening_stock": desc.get("opening_stock", 0),
             **{f"purchase_day_{i:02d}": 0 for i in range(1, 32)},

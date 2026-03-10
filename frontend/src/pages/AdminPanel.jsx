@@ -20,6 +20,7 @@ export default function AdminPanel() {
 
   // Description form
   const [newDescName, setNewDescName] = useState('');
+  const [newDescSize, setNewDescSize] = useState('');
   const [newDescOpening, setNewDescOpening] = useState('');
   const [newDescPrice, setNewDescPrice] = useState('');
 
@@ -159,12 +160,14 @@ export default function AdminPanel() {
     try {
       await api.createDescription({
         name: newDescName.trim(),
+        size: (newDescSize || '').trim(),
         opening_stock: parseInt(newDescOpening, 10) || 0,
         price: parseFloat(newDescPrice) || 0,
         active: true,
       });
       setMessage('Description added');
       setNewDescName('');
+      setNewDescSize('');
       setNewDescOpening('');
       setNewDescPrice('');
       loadData();
@@ -388,7 +391,8 @@ export default function AdminPanel() {
           <h3 style={styles.subtitle}>Add Description</h3>
           <p style={{ margin: '0 0 12px 0', color: '#6b7280', fontSize: 13 }}>Type to filter the list. Duplicate names cannot be added.</p>
           <form onSubmit={handleCreateDescription} style={styles.formRow}>
-            <input placeholder="Name" value={newDescName} onChange={(e) => setNewDescName(e.target.value)} style={styles.input} />
+            <input placeholder="Name (Details)" value={newDescName} onChange={(e) => setNewDescName(e.target.value)} style={styles.input} />
+            <input placeholder="Size" value={newDescSize} onChange={(e) => setNewDescSize(e.target.value)} style={styles.input} />
             <input type="number" placeholder="Price" value={newDescPrice} onChange={(e) => setNewDescPrice(e.target.value)} style={styles.input} />
             <input type="number" placeholder="Opening stock" value={newDescOpening} onChange={(e) => setNewDescOpening(e.target.value)} style={styles.input} />
             <button type="submit" disabled={descNameAndPriceExists(newDescName, newDescPrice)} style={{ ...styles.btn, ...(descNameAndPriceExists(newDescName, newDescPrice) ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}>Add</button>
@@ -396,7 +400,7 @@ export default function AdminPanel() {
           <ul style={styles.list}>
             {filteredDescriptions.map((d) => (
               <li key={d.id} style={styles.listItem}>
-                {d.name} (price: {d.price ?? 0}, opening: {d.opening_stock})
+                {d.name} {d.size ? `(${d.size})` : ''} - price: {d.price ?? 0}, opening: {d.opening_stock}
                 <button onClick={() => handleDeleteDescription(d.id)} style={{ ...styles.smBtn, marginLeft: 8 }}>Delete</button>
               </li>
             ))}

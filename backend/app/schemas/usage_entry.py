@@ -34,10 +34,11 @@ class StockEntryRead(BaseModel):
 
 
 class MonthlyReportRow(BaseModel):
-    """Excel-like format: Opening + Daily Purchase + Daily Usage + Closing"""
+    """Excel-like format: RICH LIGHT APPARELS - DETAILS, SIZE, STOCK, STOCK B/F, Daily IN/OUT, Total Balance"""
     
     sn: int | None
     description: str
+    size: str = ""
     price: float = 0
     opening_stock: int
     

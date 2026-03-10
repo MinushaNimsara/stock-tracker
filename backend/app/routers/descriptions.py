@@ -21,6 +21,7 @@ def create_description(payload: DescriptionCreate, _: dict = Depends(get_current
         payload.name.strip(),
         opening_stock=payload.opening_stock,
         price=payload.price,
+        size=payload.size,
         active=payload.active,
     )
     if created is None:

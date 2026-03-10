@@ -112,6 +112,7 @@ export default function StoreEntry() {
             <thead>
               <tr>
                 <th style={styles.thDetail}>DETAILS</th>
+                <th style={styles.th}>SIZE</th>
                 <th style={styles.th}>PRICE</th>
                 <th style={styles.th}>STOCK</th>
                 {IN_DEPTS.map((d) => (
@@ -126,6 +127,7 @@ export default function StoreEntry() {
               {rows.map((row) => (
                 <tr key={row.description_id}>
                   <td style={styles.tdDetail}>{row.description}</td>
+                  <td style={styles.td}>{row.size ?? ''}</td>
                   <td style={styles.td}>{row.price ?? 0}</td>
                   <td style={styles.td}>{row.opening_stock ?? 0}</td>
                   {IN_DEPTS.map((dept) => (

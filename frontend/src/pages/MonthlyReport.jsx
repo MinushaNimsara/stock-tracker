@@ -90,14 +90,15 @@ export default function MonthlyReport() {
   const prepareAllStockCSV = () => {
     const headers = [
       'S/N',
-      'Description',
-      'Price',
-      'Opening',
+      'DETAILS',
+      'SIZE',
+      'STOCK',
+      'STOCK B/F',
       ...Array.from({ length: 31 }, (_, i) => `P-${i + 1}`),
       ...Array.from({ length: 31 }, (_, i) => `U-${i + 1}`),
-      'Total Purchase',
-      'Total Usage',
-      'Closing Stock'
+      'Total IN',
+      'Total OUT',
+      'BALANCE'
     ];
 
     const rows = filteredData.map(row => {
@@ -114,7 +115,8 @@ export default function MonthlyReport() {
       return [
         row.sn,
         `"${row.description}"`,
-        row.price ?? 0,
+        row.size ? `"${row.size}"` : '',
+        row.opening_stock || 0,
         row.opening_stock || 0,
         ...purchaseValues,
         ...usageValues,
@@ -130,12 +132,13 @@ export default function MonthlyReport() {
   const preparePurchaseCSV = () => {
     const headers = [
       'S/N',
-      'Description',
-      'Price',
-      'Opening',
+      'DETAILS',
+      'SIZE',
+      'STOCK',
+      'STOCK B/F',
       ...Array.from({ length: 31 }, (_, i) => `P-${i + 1}`),
-      'Total Purchase',
-      'Closing Stock'
+      'Total IN',
+      'BALANCE'
     ];
 
     const rows = filteredData.map(row => {
@@ -147,7 +150,8 @@ export default function MonthlyReport() {
       return [
         row.sn,
         `"${row.description}"`,
-        row.price ?? 0,
+        row.size ? `"${row.size}"` : '',
+        row.opening_stock || 0,
         row.opening_stock || 0,
         ...purchaseValues,
         row.total_purchase || 0,
@@ -161,12 +165,13 @@ export default function MonthlyReport() {
   const prepareUsageCSV = () => {
     const headers = [
       'S/N',
-      'Description',
-      'Price',
-      'Opening',
+      'DETAILS',
+      'SIZE',
+      'STOCK',
+      'STOCK B/F',
       ...Array.from({ length: 31 }, (_, i) => `U-${i + 1}`),
-      'Total Usage',
-      'Closing Stock'
+      'Total OUT',
+      'BALANCE'
     ];
 
     const rows = filteredData.map(row => {
@@ -178,7 +183,8 @@ export default function MonthlyReport() {
       return [
         row.sn,
         `"${row.description}"`,
-        row.price ?? 0,
+        row.size ? `"${row.size}"` : '',
+        row.opening_stock || 0,
         row.opening_stock || 0,
         ...usageValues,
         row.total_usage || 0,
@@ -209,9 +215,10 @@ export default function MonthlyReport() {
         <thead>
           <tr>
             <th style={{ ...styles.th, ...styles.thStickyCol1 }}>S/N</th>
-            <th style={{ ...styles.th, ...styles.thStickyCol2 }}>Description</th>
-            <th style={styles.th}>Price</th>
-            <th style={styles.th}>Opening</th>
+            <th style={{ ...styles.th, ...styles.thStickyCol2 }}>DETAILS</th>
+            <th style={styles.th}>SIZE</th>
+            <th style={styles.th}>STOCK</th>
+            <th style={styles.th}>STOCK B/F</th>
             {[...Array(31)].map((_, i) => (
               <th key={`p-${i}`} style={styles.thPurchase}>P-{i + 1}</th>
               ))}
@@ -220,9 +227,9 @@ export default function MonthlyReport() {
               
               ))}
 
-            <th style={styles.thTotal}>Total Purchase</th>
-            <th style={styles.thTotal}>Total Usage</th>
-            <th style={styles.thTotal}>Closing Stock</th>
+            <th style={styles.thTotal}>Total IN</th>
+            <th style={styles.thTotal}>Total OUT</th>
+            <th style={styles.thTotal}>BALANCE</th>
           </tr>
         </thead>
         <tbody>
@@ -237,7 +244,10 @@ export default function MonthlyReport() {
                   {row.description}
                 </td>
                 <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
-                  {row.price ?? 0}
+                  {row.size ?? ''}
+                </td>
+                <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
+                  {row.opening_stock || 0}
                 </td>
                 <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
                   {row.opening_stock || 0}
@@ -283,16 +293,17 @@ export default function MonthlyReport() {
         <thead>
           <tr>
             <th style={{ ...styles.th, ...styles.thStickyCol1 }}>S/N</th>
-            <th style={{ ...styles.th, ...styles.thStickyCol2 }}>Description</th>
-            <th style={styles.th}>Price</th>
-            <th style={styles.th}>Opening</th>
+            <th style={{ ...styles.th, ...styles.thStickyCol2 }}>DETAILS</th>
+            <th style={styles.th}>SIZE</th>
+            <th style={styles.th}>STOCK</th>
+            <th style={styles.th}>STOCK B/F</th>
             {[...Array(31)].map((_, i) => (
               <th key={`p-${i}`} style={styles.thPurchase}>P-{i + 1}</th>
               
               ))}
 
-            <th style={styles.thTotal}>Total Purchase</th>
-            <th style={styles.thTotal}>Closing Stock</th>
+            <th style={styles.thTotal}>Total IN</th>
+            <th style={styles.thTotal}>BALANCE</th>
           </tr>
         </thead>
         <tbody>
@@ -307,7 +318,10 @@ export default function MonthlyReport() {
                   {row.description}
                 </td>
                 <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
-                  {row.price ?? 0}
+                  {row.size ?? ''}
+                </td>
+                <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
+                  {row.opening_stock || 0}
                 </td>
                 <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
                   {row.opening_stock || 0}
@@ -343,15 +357,16 @@ export default function MonthlyReport() {
         <thead>
           <tr>
             <th style={{ ...styles.th, ...styles.thStickyCol1 }}>S/N</th>
-            <th style={{ ...styles.th, ...styles.thStickyCol2 }}>Description</th>
-            <th style={styles.th}>Price</th>
-            <th style={styles.th}>Opening</th>
+            <th style={{ ...styles.th, ...styles.thStickyCol2 }}>DETAILS</th>
+            <th style={styles.th}>SIZE</th>
+            <th style={styles.th}>STOCK</th>
+            <th style={styles.th}>STOCK B/F</th>
             {[...Array(31)].map((_, i) => (
               <th key={`u-${i}`} style={styles.thUsage}>U-{i + 1}</th>
             ))}
 
-            <th style={styles.thTotal}>Total Usage</th>
-            <th style={styles.thTotal}>Closing Stock</th>
+            <th style={styles.thTotal}>Total OUT</th>
+            <th style={styles.thTotal}>BALANCE</th>
           </tr>
         </thead>
         <tbody>
@@ -366,7 +381,10 @@ export default function MonthlyReport() {
                   {row.description}
                 </td>
                 <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
-                  {row.price ?? 0}
+                  {row.size ?? ''}
+                </td>
+                <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
+                  {row.opening_stock || 0}
                 </td>
                 <td style={{ ...styles.td, backgroundColor: rowBgColor }}>
                   {row.opening_stock || 0}
